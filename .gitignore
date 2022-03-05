@@ -1,0 +1,7 @@
+/.serverless
+/.vscode
+/coverage
+/node_modules
+/venv
+**/**__pycache__
+/**.db
