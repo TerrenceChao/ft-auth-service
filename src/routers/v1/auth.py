@@ -55,6 +55,9 @@ def send_conform_code_by_email(
   if err != None:
     return res_err(msg=err) # TODO: raise BusinessEception (force use async.)
 
+  if res != None:
+    return res_err(msg="email_registered")
+
   if sendby == "no_exist" and res == None:
     send_conform_code(email=email, confirm_code=confirm_code)
     return res_success(msg="email_sent")
@@ -87,6 +90,7 @@ def signup(
   
   # 2.~ 4. 
   data = decrypt_meta(meta=meta, pubkey=pubkey)
+  data["email"] = email
   region = data["region"]
 
   # 5. (delay rand msecs??) 檢查 version, 將 email + register_region 寫入 S3
