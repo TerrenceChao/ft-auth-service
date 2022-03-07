@@ -34,7 +34,7 @@ class AuthRepository(IAuthRepository):
       auth_res = auth_table.get_item(Key={"email": email})
       # 1. fail -> return
       if not "Item" in auth_res:
-        return account, err_msg # err = None
+        return account, None # err = None
 
       auth = auth_res["Item"]
 
@@ -46,6 +46,9 @@ class AuthRepository(IAuthRepository):
       acc_table = account_db.Table(TABLE_ACCOUNT)
       log.info(acc_table, account_db)
       acc_res = acc_table.get_item(Key={"aid": aid})
+      if not "Item" in acc_res:
+        return account, "auth_data_without_account" # err = None
+        
       account_item = acc_res["Item"]
       
       # 4. assign fields to result(account)
