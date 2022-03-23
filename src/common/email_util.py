@@ -1,5 +1,7 @@
-import os, json
+import os
+import json
+
 
 def send_conform_code(email, confirm_code):
-  print(f"send email: {email}, code: {confirm_code}")
-  pass
+    print(f"send email: {email}, code: {confirm_code}")
+    pass

@@ -61,12 +61,12 @@ functions:
       - http:
           method: any
           path: /{proxy+}
-      - sqs:
-          arn:
-            aws:sqs:ap-northeast-1:549734764220:*
-      - dynamodb:
-          arn:
-            aws:dynamodb:ap-northeast-1:549734764220:*
+      # - sqs:
+      #     arn:
+      #       aws:sqs:ap-northeast-1:549734764220:*
+      # - dynamodb:
+      #     arn:
+      #       aws:dynamodb:ap-northeast-1:549734764220:*
 
 plugins:
   - serverless-python-requirements

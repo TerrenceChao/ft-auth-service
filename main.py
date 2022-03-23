@@ -1,13 +1,14 @@
-import os, json
+import os
+import json
 from sys import prefix
 from mangum import Mangum
 from typing import Optional, List, Dict
 from fastapi import FastAPI, Request, \
-  Cookie, Header, Path, Query, Body, Form, \
-  File, UploadFile, status, \
-  HTTPException, \
-  Depends, \
-  APIRouter
+    Cookie, Header, Path, Query, Body, Form, \
+    File, UploadFile, status, \
+    HTTPException, \
+    Depends, \
+    APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
@@ -26,25 +27,26 @@ app.include_router(router_v1)
 
 
 class BusinessEception(Exception):
-  def __init__(self, term: str):
-      self.term = term
+    def __init__(self, term: str):
+        self.term = term
+
 
 @app.exception_handler(BusinessEception)
 async def business_exception_handler(request: Request, exc: BusinessEception):
-  return JSONResponse(
-    status_code=418,
-    content={
-      "code": 1,
-      "msg": f"Oops! {exc.term} is a wrong phrase. Guess again?"
-    }
-  )
+    return JSONResponse(
+        status_code=418,
+        content={
+            "code": 1,
+            "msg": f"Oops! {exc.term} is a wrong phrase. Guess again?"
+        }
+    )
 
 
 @app.get("/auth-service/{term}")
 async def info(term: str):
-  if term != "yolo":
-    raise BusinessEception(term=term)
-  return {"mention": "You only live once"}
+    if term != "yolo":
+        raise BusinessEception(term=term)
+    return {"mention": "You only live once"}
 
 
 # Mangum Handler, this is so important
