@@ -164,7 +164,7 @@ class AuthRepository(IAuthRepository):
 
         return deleted, err_msg
 
-    def authentication(self, db: Any, email: str, pw: str, hash_func: Any):
+    def authentication(self, db: Any, email: str, pw: str, match_password: Any):
         err_msg: str = None
         result = None
 
@@ -189,8 +189,8 @@ class AuthRepository(IAuthRepository):
             pass_salt = auth["pass_salt"]
 
             # TODO: error_password
-            # 3. validation password by hash_func
-            if not hash_func(hash=pass_hash, pw=pw, salt=pass_salt):
+            # 3. validation password by match_password
+            if not match_password(pass_hash=pass_hash, pw=pw, pass_salt=pass_salt):
                 return result, "error_password"
 
             # 4. return aid

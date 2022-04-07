@@ -17,9 +17,11 @@ class IAuthRepository:
         pass
 
     @abstractmethod
-    def authentication(self, db: Any, email: str, pw: str, hash_func: Any):
+    def authentication(self, db: Any, email: str, pw: str, match_password: Any):
         pass
 
     @abstractmethod
     def find_account(self, db: Any, aid: int):
         pass
+
+
