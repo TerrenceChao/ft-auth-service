@@ -8,8 +8,7 @@ import logging
 FT_BUCKET = os.getenv("FT_BUCKET", "foreign-teacher")
 
 
-session = boto3.Session(aws_access_key_id="", aws_secret_access_key="")
-s3 = session.resource("s3")
+s3 = boto3.resource("s3")
 
 
 log = logging.getLogger()
