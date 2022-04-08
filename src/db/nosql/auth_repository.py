@@ -1,6 +1,7 @@
 import os
 import json
 from typing import Dict, List, Any, Optional
+from decimal import Decimal
 import logging
 import datetime
 from boto3.dynamodb.conditions import Key, Attr
@@ -193,6 +194,7 @@ class AuthRepository(IAuthRepository):
             if not match_password(pass_hash=pass_hash, pw=pw, pass_salt=pass_salt):
                 return result, "error_password"
 
+            print("step 3", type(auth["aid"]))
             # 4. return aid
             result = auth["aid"]
 
@@ -204,7 +206,7 @@ class AuthRepository(IAuthRepository):
 
         return result, err_msg
 
-    def find_account(self, db: Any, aid: int):
+    def find_account(self, db: Any, aid: Decimal):
         err_msg: str = None
         result = None
 

@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from decimal import Decimal
 from typing import Dict, List, Any, Optional
 
 
@@ -21,7 +22,7 @@ class IAuthRepository:
         pass
 
     @abstractmethod
-    def find_account(self, db: Any, aid: int):
+    def find_account(self, db: Any, aid: Decimal):
         pass
 
 
