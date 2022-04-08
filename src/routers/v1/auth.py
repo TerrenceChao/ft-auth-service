@@ -9,12 +9,9 @@ from fastapi import APIRouter, \
     HTTPException
 from ..res.response import res_success, res_err
 from ...common.auth_util import get_public_key, decrypt_meta, \
-    gen_account_data, \
-    hash_func, gen_token
-from ...common.object_storage import init_global_storage, \
-    update_global_storage, \
-    delete_global_storage, \
-    find_global_storage
+    gen_random_string, gen_account_data, \
+    match_password, filter_by_keys, gen_token
+from ...common.global_object_storage import get_global_object_storage
 from ...common.email_util import send_conform_code
 from ...db.nosql.database import get_db
 from ...db.nosql import schemas, auth_repository
@@ -43,8 +40,6 @@ sendby:
   "no_exist", # email 不存在時寄送
   "registered", # email 已註冊時寄送
 """
-
-
 @router.post("/sendcode/email")
 def send_conform_code_by_email(
     email: str = Body(...),
@@ -56,7 +51,7 @@ def send_conform_code_by_email(
 
     res, err = auth_repo.get_account_by_email(
         auth_db=auth_db, account_db=account_db, email=email, fields=["email", "region", "role"])
-    if err != None:
+    if err:
         # TODO: raise BusinessEception (force use async.)
         return res_err(msg=err)
 
@@ -79,20 +74,28 @@ def send_conform_code_by_email(
 6. gen packet_data 並寫入 DB
 7. gen JWT
 """
-
-
 @router.post("/signup")
 def signup(
     email: str = Body(...),
     meta: str = Body(...),
     pubkey: str = Body(...),
     auth_db: Any = Depends(get_db),
-    account_db: Any = Depends(get_db)
+    account_db: Any = Depends(get_db),
+    obj_storage: Any = Depends(get_global_object_storage)
 ):
     # optimistic lock in S3?
-    # 1. 去 S3 檢查 email 有沒註冊過，沒有 先寫入 email + version (auth gen)
-    version, err = init_global_storage(bucket=email, data=email)
-    if err != None:
+    # 1. 去 S3 檢查 email 有沒註冊過
+    email_info, err = obj_storage.find(bucket=email)
+    if err:
+        return res_err(msg=err)
+    
+    if email_info:
+        return res_err(msg="registered")
+    
+    # 沒有註冊過 先寫入 email + version (auth gen)
+    version = gen_random_string(6)
+    version, err = obj_storage.init(bucket=email, version=version)
+    if err:
         return res_err(msg=err)  # "email_registered" or "storage_upsert_error"
 
     # 2.~ 4.
@@ -101,9 +104,9 @@ def signup(
     region = data["region"]
 
     # 5. (delay rand msecs??) 檢查 version, 將 email + register_region 寫入 S3
-    res, err = update_global_storage(
-        bucket=email, olddata=f"{email}_{version}", newdata={"region": region})
-    if err != None:
+    res, err = obj_storage.update(
+        bucket=email, version=version, newdata={"region": region})
+    if err:
         return res_err(msg=err)
 
     # 6. gen packet_data 並寫入 DB
@@ -111,20 +114,20 @@ def signup(
     # res = { aid, region, email, email2, is_active, role, role_id } = account_data
     res, err = auth_repo.create_account(
         auth_db=auth_db, account_db=account_db, email=email, data=account_data)
-    if err != None:
+    if err:
         del_res, del_err = auth_repo.delete_account_by_email(
             auth_db=auth_db, account_db=account_db, email=email)
-        if del_err != None:
+        if del_err:
             return res_err(msg=del_err)
 
-        del_res, del_err = delete_global_storage(bucket=email)
-        if del_err != None:
+        del_res, del_err = obj_storage.delete(bucket=email)
+        if del_err:
             return res_err(msg=del_err)
 
         return res_err(msg=err)
 
     # 7. gen JWT
-    token = gen_token(data=account_data)
+    token = gen_token(data=account_data, fields=["role_id"])
     return res_success(data={
         "email": res["email"],
         "region": res["region"],
@@ -140,18 +143,21 @@ def login(
     meta: str = Body(...),
     pubkey: str = Body(...),
     auth_db: Any = Depends(get_db),
-    account_db: Any = Depends(get_db)
+    account_db: Any = Depends(get_db),
+    obj_storage: Any = Depends(get_global_object_storage)
 ):
     data = decrypt_meta(meta=meta, pubkey=pubkey)
-    print(data, type(data))
     aid, err = auth_repo.authentication(
-        db=auth_db, email=email, pw=data["pass"], hash_func=hash_func)
+        db=auth_db, email=email, pw=data["pass"], match_password=match_password)
     if err == "error_password":
         return res_err(msg="error_password")
 
     if err == "not_registered":
-        email_info, storage_err = find_global_storage(bucket=email)
-        if email_info == None:
+        email_info, storage_err = obj_storage.find(bucket=email)
+        if storage_err:
+            return res_err(msg=storage_err)
+        
+        elif email_info == None:
             return res_err(msg="not_registered")
 
         else:
@@ -159,18 +165,16 @@ def login(
             return res_err(msg="register_fail")
 
     # unknow error
-    if err != None:
+    if err:
         return res_err(msg=err)
 
     res, err = auth_repo.find_account(db=account_db, aid=aid)
-    if err != None:
+    if err:
         return res_err(msg=err)
-
-    token = gen_token(data=res)
-    return res_success(data={
-        "email": res["email"],
-        "region": res["region"],
-        "role": res["role"],
-        "role_id": res["role_id"],
-        "token": token
-    })
+    
+    
+    res = filter_by_keys(res, ["email", "region", "role", "role_id"])
+    token = gen_token(data=res, fields=["role_id"])
+    res.update({ "token": token })
+    
+    return res_success(data=res)

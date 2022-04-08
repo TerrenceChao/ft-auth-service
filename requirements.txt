@@ -29,3 +29,6 @@ typing_extensions==4.0.1
 urllib3==1.25.11
 uvicorn==0.17.1
 sqs-queue==0.6.2
+rsa==4.7.2
+snowflake-id==0.0.2
+PyJWT==2.3.0
