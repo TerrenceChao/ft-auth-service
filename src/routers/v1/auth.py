@@ -142,6 +142,7 @@ def login(
     email: str = Body(...),
     meta: str = Body(...),
     pubkey: str = Body(...),
+    client_region: str = Body(...),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
     obj_storage: Any = Depends(get_global_object_storage)
@@ -160,8 +161,14 @@ def login(
         elif email_info == None:
             return res_err(msg="not_registered")
 
+        # email_info, S3 有，但是這地區的 DB 沒有，有可能在其他地區的 DB
+        elif "region" in email_info and email_info["region"] != client_region:
+            return res_err(data=email_info, msg="wrong_region")
+ 
         else:
-            # log email_info, S3 有但是 DB 沒有!?!?!?
+            # email_info, S3 有:
+            # 1. 有 region, 也顯示在該地區 -> S3有, DB沒有。
+            # 2. 沒記錄 region
             return res_err(msg="register_fail")
 
     # unknow error
