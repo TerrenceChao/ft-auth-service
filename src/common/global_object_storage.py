@@ -23,8 +23,8 @@ class GlobalObjectStorage:
         err = None
         try:
             file = json.dumps({ "version": version })
-            bucket_name = ''.join([str(bucket), '/email_info.json'])
-            object = self.s3.Object(FT_BUCKET, bucket_name)
+            key = ''.join([str(bucket), '/email_info.json'])
+            object = self.s3.Object(FT_BUCKET, key)
             object.put(Body=file)
 
             return version, err
@@ -50,8 +50,8 @@ class GlobalObjectStorage:
             data.update(newdata)
             result = json.dumps(data)
             
-            bucket_name = ''.join([str(bucket), '/email_info.json'])
-            object = self.s3.Object(FT_BUCKET, bucket_name)
+            key = ''.join([str(bucket), '/email_info.json'])
+            object = self.s3.Object(FT_BUCKET, key)
             object.put(Body=result)
         
         except Exception as e:
@@ -64,8 +64,8 @@ class GlobalObjectStorage:
         err = None
         result = False
         try:
-            bucket_name = ''.join([str(bucket), '/email_info.json'])
-            self.s3.Object(FT_BUCKET, bucket_name).delete()
+            key = ''.join([str(bucket), '/email_info.json'])
+            self.s3.Object(FT_BUCKET, key).delete()
             result = True
         
         except Exception as e:
@@ -84,8 +84,8 @@ class GlobalObjectStorage:
         err = None
         result = None
         try:
-            bucket_name = ''.join([str(bucket), '/email_info.json'])
-            object = self.s3.Object(FT_BUCKET, bucket_name)
+            key = ''.join([str(bucket), '/email_info.json'])
+            object = self.s3.Object(FT_BUCKET, key)
 
             file_stream = io.BytesIO()
             object.download_fileobj(file_stream)
