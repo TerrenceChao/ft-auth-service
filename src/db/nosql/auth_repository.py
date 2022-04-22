@@ -2,6 +2,7 @@ import os
 import json
 from typing import Dict, List, Any, Optional
 from decimal import Decimal
+from pydantic import EmailStr
 import logging
 import datetime
 from boto3.dynamodb.conditions import Key, Attr
@@ -24,14 +25,14 @@ class AuthRepository(IAuthRepository):
     def __init__(self):
         pass
 
-    def get_account_by_email(self, auth_db: Any, account_db: Any, email: str, fields: List):
+    def get_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr, fields: List):
         err_msg: str = None
         account = None
 
         try:
             # 1. get auth
             auth_table = auth_db.Table(TABLE_AUTH)
-            log.info(auth_table, auth_db)
+            log.info(auth_table)
             auth_res = auth_table.get_item(Key={"email": email})
             # 1. fail -> return
             if not "Item" in auth_res:
@@ -44,7 +45,7 @@ class AuthRepository(IAuthRepository):
 
             # 3. get account by aid
             acc_table = account_db.Table(TABLE_ACCOUNT)
-            log.info(acc_table, account_db)
+            log.info(acc_table)
             acc_res = acc_table.get_item(Key={"aid": aid})
             if not "Item" in acc_res:
                 return account, "auth_data_without_account"  # err = None
@@ -64,14 +65,14 @@ class AuthRepository(IAuthRepository):
 
         return account, err_msg
 
-    def create_account(self, auth_db: Any, account_db: Any, email: str, data: Any):
+    def create_account(self, auth_db: Any, account_db: Any, email: EmailStr, data: Any):
         err_msg: str = None
         account = None
 
         try:
             # 1. create auth
             auth_table = auth_db.Table(TABLE_AUTH)
-            log.info(auth_table, auth_db)
+            log.info(auth_table)
             auth_res = auth_table.put_item(
                 Item={
                     "email": email,
@@ -86,7 +87,7 @@ class AuthRepository(IAuthRepository):
 
             # 2. create account
             acc_table = account_db.Table(TABLE_ACCOUNT)
-            log.info(acc_table, account_db)
+            log.info(acc_table)
             acc_res = acc_table.put_item(
                 Item={
                     "aid": data["aid"],
@@ -113,14 +114,14 @@ class AuthRepository(IAuthRepository):
 
         return account, err_msg
 
-    def delete_account_by_email(self, auth_db: Any, account_db: Any, email: str):
+    def delete_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr):
         err_msg: str = None
         deleted = False
 
         try:
             # 1. find auth by email
             auth_table = auth_db.Table(TABLE_AUTH)
-            log.info(auth_table, auth_db)
+            log.info(auth_table)
             auth_res = auth_table.get_item(Key={"email": email})
             # 1. fail -> auth not found
             print("step 1 \b", auth_res)
@@ -139,7 +140,7 @@ class AuthRepository(IAuthRepository):
 
             # 4. delete account by aid
             acc_table = account_db.Table(TABLE_ACCOUNT)
-            log.info(acc_table, account_db)
+            log.info(acc_table)
             acc_del_res = acc_table.delete_item(Key={"aid": aid})
 
             # 4. delete account fail -> update acccount(is_active = False)
@@ -165,14 +166,14 @@ class AuthRepository(IAuthRepository):
 
         return deleted, err_msg
 
-    def authentication(self, db: Any, email: str, pw: str, match_password: Any):
+    def authentication(self, db: Any, email: EmailStr, pw: str, match_password: Any):
         err_msg: str = None
         result = None
 
         try:
             # 1. find auth by email
             table = db.Table(TABLE_AUTH)
-            log.info(table, db)
+            log.info(table)
             res = table.get_item(Key={"email": email})
             print("step 1", res)
 
@@ -213,7 +214,7 @@ class AuthRepository(IAuthRepository):
         try:
             # 1. find account by aid
             table = db.Table(TABLE_ACCOUNT)
-            log.info(table, db)
+            log.info(table)
             res = table.get_item(Key={"aid": aid})
             result = res["Item"]
 

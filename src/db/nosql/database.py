@@ -12,7 +12,7 @@ DYNAMODB_URL = os.getenv("DYNAMODB_URL", "http://localhost:8000")
 
 
 def get_db():
-    dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_URL)
+    dynamodb = boto3.resource('dynamodb')
     try:
         yield dynamodb
     except Exception as e:
@@ -23,7 +23,7 @@ def get_db():
 
 
 def get_client():
-    dynamodb_client = boto3.client('dynamodb', endpoint_url=DYNAMODB_URL)
+    dynamodb_client = boto3.client('dynamodb')
     try:
         yield dynamodb_client
     except Exception as e:
@@ -34,10 +34,7 @@ def get_client():
 
 
 def client_err_msg(e: ClientError):
-    if e.response['Error']['Code'] == "ConditionalCheckFailedException":
-        return e.response['Error']['Message']
-    else:
-        return e.__str__()
+    return e.msg
 
 
 def response_success(res):

@@ -1,12 +1,11 @@
-from atexit import register
 import json
 from typing import List, Dict, Any
-from unicodedata import name
 from fastapi import APIRouter, \
     Request, Depends, \
     Cookie, Header, Path, Query, Body, Form, \
     File, UploadFile, status, \
     HTTPException
+from pydantic import EmailStr
 from ..res.response import res_success, res_err
 from ...common.auth_util import get_public_key, decrypt_meta, \
     gen_random_string, gen_account_data, \
@@ -42,7 +41,7 @@ sendby:
 """
 @router.post("/sendcode/email")
 def send_conform_code_by_email(
-    email: str = Body(...),
+    email: EmailStr = Body(...),
     confirm_code: str = Body(...),
     sendby: str = Body(...),
     auth_db: Any = Depends(get_db),
@@ -76,7 +75,7 @@ def send_conform_code_by_email(
 """
 @router.post("/signup")
 def signup(
-    email: str = Body(...),
+    email: EmailStr = Body(...),
     meta: str = Body(...),
     pubkey: str = Body(...),
     auth_db: Any = Depends(get_db),
@@ -90,7 +89,7 @@ def signup(
         return res_err(msg=err)
     
     if email_info:
-        return res_err(msg="registered")
+        return res_err(msg="registered", data=email_info)
     
     # 沒有註冊過 先寫入 email + version (auth gen)
     version = gen_random_string(6)
@@ -139,7 +138,7 @@ def signup(
 
 @router.post("/login")
 def login(
-    email: str = Body(...),
+    email: EmailStr = Body(...),
     meta: str = Body(...),
     pubkey: str = Body(...),
     client_region: str = Body(...),

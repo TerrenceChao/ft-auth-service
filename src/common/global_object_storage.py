@@ -20,7 +20,7 @@ class GlobalObjectStorage:
         self.s3 = s3
 
     def init(self, bucket, version):
-        err = None
+        err: str = None
         try:
             file = json.dumps({ "version": version })
             key = ''.join([str(bucket), '/email_info.json'])
@@ -37,7 +37,7 @@ class GlobalObjectStorage:
     
 
     def update(self, bucket, version, newdata):
-        err = None
+        err: str = None
         result = None
         try:
             data, err = self.find(bucket)
@@ -61,7 +61,7 @@ class GlobalObjectStorage:
         return result, err
     
     def delete(self, bucket):
-        err = None
+        err: str = None
         result = False
         try:
             key = ''.join([str(bucket), '/email_info.json'])
@@ -81,7 +81,7 @@ class GlobalObjectStorage:
         }, None
     """
     def find(self, bucket):
-        err = None
+        err: str = None
         result = None
         try:
             key = ''.join([str(bucket), '/email_info.json'])
