@@ -3,7 +3,7 @@ import json
 from typing import Dict, List, Any, Optional
 from decimal import Decimal
 from pydantic import EmailStr
-import logging
+import logging as log
 import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
@@ -11,14 +11,12 @@ from botocore.exceptions import ClientError
 from .database import client_err_msg, response_success
 from ...repositories.auth_repository import IAuthRepository
 
-
-log = logging.getLogger()
-log.setLevel(logging.INFO)
+log.basicConfig(level=log.INFO)
 
 
 TABLE_AUTH = os.getenv("TABLE_AUTH", "auth")
 TABLE_ACCOUNT = os.getenv("TABLE_ACCOUNT", "accounts")
-BATCH_LIMIT = int(os.getenv("BATCH_LIMIT", "25"))
+BATCH_LIMIT = int(os.getenv("BATCH_LIMIT", "20"))
 
 
 class AuthRepository(IAuthRepository):
@@ -97,6 +95,7 @@ class AuthRepository(IAuthRepository):
                     "is_active": True,
                     "role": data["role"],
                     "role_id": data["role_id"],
+                    "type": data["type"], # account_type: ft, fb, or google
                 }
             )
 
@@ -195,7 +194,7 @@ class AuthRepository(IAuthRepository):
             if not match_password(pass_hash=pass_hash, pw=pw, pass_salt=pass_salt):
                 return result, "error_password"
 
-            print("step 3", type(auth["aid"]))
+            log.debug("step 3", type(auth["aid"]))
             # 4. return aid
             result = auth["aid"]
 

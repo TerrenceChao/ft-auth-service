@@ -2,17 +2,15 @@ import io
 import os
 import json
 import boto3
-import logging
+import logging as log
+
+log.basicConfig(level=log.INFO)
 
 
 FT_BUCKET = os.getenv("FT_BUCKET", "foreign-teacher")
 
 
 s3 = boto3.resource("s3")
-
-
-log = logging.getLogger()
-log.setLevel(logging.ERROR)
 
 
 class GlobalObjectStorage:

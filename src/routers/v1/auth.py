@@ -9,12 +9,15 @@ from pydantic import EmailStr
 from ..res.response import res_success, res_err
 from ...common.auth_util import get_public_key, decrypt_meta, \
     gen_random_string, gen_account_data, \
-    match_password, filter_by_keys, gen_token
+    match_password, filter_by_keys
 from ...common.global_object_storage import get_global_object_storage
 from ...common.email_util import send_conform_code
-from ...db.nosql.database import get_db
+from ...db.nosql.database import get_db, get_client
 from ...db.nosql import schemas, auth_repository
 from ..exceptions import BusinessEception
+import logging as log
+
+log.basicConfig(level=log.INFO)
 
 
 auth_repo = auth_repository.AuthRepository()
@@ -71,7 +74,6 @@ def send_conform_code_by_email(
 4. gen hash(pass + salt) = pass_hash
 5. (delay rand msecs??) 檢查 version, 將 email + register_region 寫入 S3
 6. gen packet_data 並寫入 DB
-7. gen JWT
 """
 @router.post("/signup")
 def signup(
@@ -109,7 +111,7 @@ def signup(
         return res_err(msg=err)
 
     # 6. gen packet_data 並寫入 DB
-    account_data = gen_account_data(data)
+    account_data = gen_account_data(data, "ft")
     # res = { aid, region, email, email2, is_active, role, role_id } = account_data
     res, err = auth_repo.create_account(
         auth_db=auth_db, account_db=account_db, email=email, data=account_data)
@@ -125,14 +127,11 @@ def signup(
 
         return res_err(msg=err)
 
-    # 7. gen JWT
-    token = gen_token(data=account_data, fields=["role_id"])
     return res_success(data={
         "email": res["email"],
         "region": res["region"],
         "role": res["role"],
         "role_id": res["role_id"],
-        "token": token
     })
 
 
@@ -155,6 +154,7 @@ def login(
     if err == "not_registered":
         email_info, storage_err = obj_storage.find(bucket=email)
         if storage_err:
+            log.error(f"/login fail, storage_err:{storage_err}")
             return res_err(msg=storage_err)
         
         elif email_info == None:
@@ -172,15 +172,14 @@ def login(
 
     # unknow error
     if err:
+        log.error(f"/login authentication fail, err:{err}")
         return res_err(msg=err)
 
     res, err = auth_repo.find_account(db=account_db, aid=aid)
     if err:
+        log.error(f"/login find_account fail, err:{err}")
         return res_err(msg=err)
     
     
-    res = filter_by_keys(res, ["email", "region", "role", "role_id"])
-    token = gen_token(data=res, fields=["role_id"])
-    res.update({ "token": token })
-    
+    res = filter_by_keys(res, ["email", "region", "role", "role_id"]) 
     return res_success(data=res)

@@ -5,7 +5,6 @@ from datetime import date, datetime
 from typing import List
 from snowflake import SnowflakeGenerator
 import hashlib
-import jwt
 
 TOKEN_EXPIRE_TIME = int(os.getenv("TOKEN_EXPIRE_TIME", 60 * 60 * 24 * 30))
 
@@ -27,7 +26,7 @@ def decrypt_meta(meta, pubkey):
 """
 instances = 100
 snowflake_generator_dict = {}
-for i in range(1, instances):
+for i in range(instances):
     snowflake_generator_dict[i] = SnowflakeGenerator(i)
 
 
@@ -44,7 +43,7 @@ def gen_random_string(length):
     # choose from all lowercase letter
     return ''.join(random.choice(letters) for i in range(length))
 
-def gen_account_data(data):
+def gen_account_data(data: dict, account_type: str):
     aid = gen_snowflake_id()
     role_id = gen_snowflake_id()
     pass_salt = gen_random_string(12)
@@ -60,6 +59,7 @@ def gen_account_data(data):
 
         # account
         # "aid": ..
+        "type": account_type,
         "region": data["region"],
         # "email": ..
         "email2": None,
@@ -83,17 +83,3 @@ def filter_by_keys(data, ary):
         result["role_id"] = result["role_id"]
         
     return result
-
-
-# TODO: secret??
-def gen_token(data, fields: List):
-    public_info = {}
-    secret = ''
-    for field in fields:
-        val = str(data[field])
-        public_info[field] = val
-        secret += (field + val)
-        
-    exp = datetime.now().timestamp() + TOKEN_EXPIRE_TIME
-    public_info.update({ "exp": exp })
-    return jwt.encode(public_info, secret, algorithm="HS256")

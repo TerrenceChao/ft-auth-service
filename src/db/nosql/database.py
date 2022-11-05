@@ -1,11 +1,9 @@
 import os
 import boto3
-import logging
+import logging as log
 from botocore.exceptions import ClientError
 
-
-log = logging.getLogger()
-log.setLevel(logging.ERROR)
+log.basicConfig(level=log.INFO)
 
 
 LOCAL_DB = "http://localhost:8000"
@@ -14,6 +12,7 @@ DYNAMODB_URL = os.getenv("DYNAMODB_URL", LOCAL_DB)
 
 def get_db():
     try:
+        log.info(f"DYNAMODB_URL:{DYNAMODB_URL}")
         if DYNAMODB_URL == LOCAL_DB:
             dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_URL)
         else:
