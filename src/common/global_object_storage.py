@@ -22,8 +22,8 @@ class GlobalObjectStorage:
         try:
             file = json.dumps({ "version": version })
             key = ''.join([str(bucket), '/email_info.json'])
-            object = self.s3.Object(FT_BUCKET, key)
-            object.put(Body=file)
+            obj = self.s3.Object(FT_BUCKET, key)
+            obj.put(Body=file)
 
             return version, err
         
@@ -49,8 +49,8 @@ class GlobalObjectStorage:
             result = json.dumps(data)
             
             key = ''.join([str(bucket), '/email_info.json'])
-            object = self.s3.Object(FT_BUCKET, key)
-            object.put(Body=result)
+            obj = self.s3.Object(FT_BUCKET, key)
+            obj.put(Body=result)
         
         except Exception as e:
             err = e.__str__()
@@ -83,10 +83,10 @@ class GlobalObjectStorage:
         result = None
         try:
             key = ''.join([str(bucket), '/email_info.json'])
-            object = self.s3.Object(FT_BUCKET, key)
+            obj = self.s3.Object(FT_BUCKET, key)
 
             file_stream = io.BytesIO()
-            object.download_fileobj(file_stream)
+            obj.download_fileobj(file_stream)
             file_stream.seek(0)
             string = file_stream.read().decode('utf-8')
             result = json.loads(string)

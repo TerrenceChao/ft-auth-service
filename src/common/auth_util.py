@@ -13,7 +13,12 @@ def get_public_key(ts):
     return "abcdefghijkl"
 
 
-# TODO: asymmetric encrypt/decrypt
+""" 
+TODO: asymmetric encrypt/decrypt
+a. 透過 private 解密出 pass
+b. 產生 pass_salt
+c. gen hash(pass + salt) = pass_hash
+"""
 def decrypt_meta(meta, pubkey):
     return json.loads(meta)
 
