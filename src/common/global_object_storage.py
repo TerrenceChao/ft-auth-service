@@ -4,7 +4,7 @@ import json
 import boto3
 import logging as log
 
-log.basicConfig(level=log.INFO)
+log.basicConfig(filemode='w', level=log.INFO)
 
 
 FT_BUCKET = os.getenv("FT_BUCKET", "foreign-teacher")

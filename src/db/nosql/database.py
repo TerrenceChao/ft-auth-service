@@ -3,7 +3,7 @@ import boto3
 import logging as log
 from botocore.exceptions import ClientError
 
-log.basicConfig(level=log.INFO)
+log.basicConfig(filemode='w', level=log.INFO)
 
 
 LOCAL_DB = "http://localhost:8000"

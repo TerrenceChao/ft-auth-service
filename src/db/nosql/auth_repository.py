@@ -3,16 +3,15 @@ import json
 from typing import Dict, List, Any, Optional
 from decimal import Decimal
 from pydantic import EmailStr
-import logging as log
 import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 from .database import client_err_msg, response_success
 from ...repositories.auth_repository import IAuthRepository
+import logging as log
 
-log.basicConfig(level=log.INFO)
-
+log.basicConfig(filemode='w', level=log.INFO)
 
 TABLE_AUTH = os.getenv("TABLE_AUTH", "auth")
 TABLE_ACCOUNT = os.getenv("TABLE_ACCOUNT", "accounts")
@@ -123,7 +122,7 @@ class AuthRepository(IAuthRepository):
             log.info(auth_table)
             auth_res = auth_table.get_item(Key={"email": email})
             # 1. fail -> auth not found
-            print("step 1 \b", auth_res)
+            # log.debug("step 1 \b %s", auth_res)
             if not "Item" in auth_res:
                 return deleted, "auth_not_found"
 
@@ -174,16 +173,16 @@ class AuthRepository(IAuthRepository):
             table = db.Table(TABLE_AUTH)
             log.info(table)
             res = table.get_item(Key={"email": email})
-            print("step 1", res)
+            # log.debug("step 1 %s", res)
 
             # TODO: check not_registered
             # 1. not_registered
             if not "Item" in res:
-                print("step 1 not_registered")
+                # log.debug("step 1 not_registered")
                 return result, "not_registered"
 
             auth = res["Item"]
-            print("step 2", auth)
+            # log.debug("step 2 %s", auth)
 
             # 2. get pass info
             pass_hash = auth["pass_hash"]
@@ -194,7 +193,7 @@ class AuthRepository(IAuthRepository):
             if not match_password(pass_hash=pass_hash, pw=pw, pass_salt=pass_salt):
                 return result, "error_password"
 
-            log.debug("step 3", type(auth["aid"]))
+            # log.debug("step 3 %s", type(auth["aid"]))
             # 4. return aid
             result = auth["aid"]
 

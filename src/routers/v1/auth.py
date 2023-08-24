@@ -14,7 +14,7 @@ from ...db.nosql.database import get_db, get_client
 from ...db.nosql.auth_repository import AuthRepository
 from ..exceptions import BusinessEception
 import logging as log
-log.basicConfig(level=log.INFO)
+log.basicConfig(filemode='w', level=log.INFO)
 
 auth_service = AuthService(auth_repo=AuthRepository())
 

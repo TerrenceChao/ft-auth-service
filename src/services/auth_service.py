@@ -4,7 +4,7 @@ from ..db.nosql.auth_repository import AuthRepository
 from ..common import auth_util, email_util
 import logging as log
 
-log.basicConfig(level=log.INFO)
+log.basicConfig(filemode='w', level=log.INFO)
 
 class AuthService:
     def __init__(self, auth_repo: AuthRepository) -> None:
