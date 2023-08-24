@@ -12,7 +12,7 @@ class AuthService:
         pass
 
 
-    def send_conform_code_by_email(
+    async def send_conform_code_by_email(
         self,
         email: EmailStr,
         confirm_code: str,
@@ -21,26 +21,33 @@ class AuthService:
         account_db: Any
     ): # -> Tuple[Union[str, None], Union[str, None]]:
         res, err = self.auth_repo.get_account_by_email(
-            auth_db=auth_db, 
-            account_db=account_db, 
-            email=email, 
+            auth_db=auth_db,
+            account_db=account_db,
+            email=email,
             fields=["email", "region", "role"]
         )
-        
-        if sendby == "no_exist" and res == None and err == None:
-            email_util.send_conform_code(email=email, confirm_code=confirm_code)
-            return ("email_sent", None)
+        if err:
+            return (None, err)
 
-        if res != None:
+        sendby = str(sendby).lower()
+        if res == None:
+            if sendby == "no_exist":
+                await email_util.send_conform_code(email=email, confirm_code=confirm_code)
+                return ("email_sent", None)
+            return (None, "email_not_found")
+        
+        else:
+            if sendby == "registered":
+                await email_util.send_conform_code(email=email, confirm_code=confirm_code)
+                return ("email_sent", None)
             return (None, "email_registered")
 
-        return (None, "email_NOT_sent")
 
-
-    """auth_service: signup
-    1. 檢查 email 有沒註冊過
-    2. 產生帳戶資料
-    3. 將帳戶資料寫入 DB
+    """
+    註冊流程
+        1. 檢查 email 有沒註冊過
+        2. 產生帳戶資料
+        3. 將帳戶資料寫入 DB
     """
     def signup(
         self,
@@ -56,12 +63,12 @@ class AuthService:
             return (email_info_or_version, err)
 
         # 2. 產生帳戶資料
-        account_data, err = self.__generate_account_data(data, email, email_info_or_version, obj_storage)
+        account_data, err = self.__generate_account_data(email, data, email_info_or_version, obj_storage)
         if err:
             return (None, err)
 
         # 3. 將帳戶資料寫入 DB
-        return self.__save_account_data(auth_db, account_db, email, account_data, obj_storage)
+        return self.__save_account_data(email, account_data, auth_db, account_db, obj_storage)
         
         
     """
@@ -79,12 +86,12 @@ class AuthService:
         obj_storage: Any
     ): # -> Tuple[Union[Any, None], Union[str, None]]:
         # 1. 驗證登入資訊
-        aid, err = self.__verification(data, email, client_region, auth_db, obj_storage)
+        aid, err = self.__validation(email, data, client_region, auth_db, obj_storage)
         if err:
             return (None, err)
         
         # 2. 取得帳戶資料
-        return self.__find_account(account_db, aid)
+        return self.__find_account(aid, account_db)
 
 
     """
@@ -113,9 +120,9 @@ class AuthService:
     產生帳戶資料
         1. 更新 email 資料到 S3
             檢查 version, 將 email + register_region 覆寫至 S3
-        2. 產生 DynamoDB 註冊資料
+        2. 產生 DynamoDB 需要的帳戶資料
     """
-    def __generate_account_data(self, data: Any, email: EmailStr, version: str, obj_storage: Any) -> Tuple[Union[Any, None], Union[str, None]]:
+    def __generate_account_data(self, email: EmailStr, data: Any, version: str, obj_storage: Any) -> Tuple[Union[Any, None], Union[str, None]]:
         # 1. 更新 email 資料到 S3
         region = data["region"]
         res, err = obj_storage.update(
@@ -123,7 +130,7 @@ class AuthService:
         if err:
             return (None, "storage_update_err")
         
-        # 2. 產生 DynamoDB 註冊資料
+        # 2. 產生 DynamoDB 需要的帳戶資料
         data["email"] = email
         account_data = auth_util.gen_account_data(data, "ft")
         return (account_data, None) # all good!
@@ -138,11 +145,11 @@ class AuthService:
             b. 再嘗試刪除 S3
     """
     def __save_account_data(
-        self, 
-        auth_db: Any, 
-        account_db: Any, 
-        email: EmailStr, 
-        account_data: Any, 
+        self,
+        email: EmailStr,
+        account_data: Any,
+        auth_db: Any,
+        account_db: Any,
         obj_storage: Any
     ) -> Tuple[Union[Any, None], Union[str, None]]:
         # 1. 將帳戶資料寫入 DynamoDB
@@ -175,10 +182,10 @@ class AuthService:
         1. 從 DynamoDB (auth) 取得 aid (account_id)
         2. 錯誤處理..
     """
-    def __verification(
-        self, 
-        data: Any, 
+    def __validation(
+        self,
         email: EmailStr,
+        data: Any,
         client_region: str,
         auth_db: Any,
         obj_storage: Any
@@ -219,9 +226,9 @@ class AuthService:
     
     """
     取得帳戶資料
-        從 DynamoDB (account) 取得必要的帳戶資料
+        從 DynamoDB (accounts) 取得必要的帳戶資料
     """
-    def __find_account(self, account_db: Any, aid: str) -> Tuple[Union[Any, None], Union[str, None]]:
+    def __find_account(self, aid: str, account_db: Any) -> Tuple[Union[Any, None], Union[str, None]]:
         res, err = self.auth_repo.find_account(db=account_db, aid=aid)
         if err:
             log.error(f"/login find_account fail, err:{err}")

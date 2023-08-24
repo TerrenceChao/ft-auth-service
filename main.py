@@ -12,22 +12,17 @@ from fastapi import FastAPI, Request, \
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
-from src.routers.v1 import auth as auth_v1
-from src.routers.v1_1 import auth as auth_v1_1
+from src.routers.v1 import auth
 
 
 router_v1 = APIRouter(prefix="/auth/api/v1")
-router_v1.include_router(auth_v1.router)
-
-router_v1_1 = APIRouter(prefix="/auth/api/v1.1")
-router_v1_1.include_router(auth_v1_1.router)
+router_v1.include_router(auth.router)
 
 
 STAGE = os.environ.get('STAGE')
 root_path = '/' if not STAGE else f'/{STAGE}'
 app = FastAPI(title="ForeignTeacher: Auth Service", root_path=root_path)
 app.include_router(router_v1)
-app.include_router(router_v1_1)
 
 
 class BusinessEception(Exception):
