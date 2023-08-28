@@ -108,7 +108,7 @@ class AuthService:
             return (email_info, "registered")
         
         # save email and version into S3 if it's not registered
-        version = auth_util.gen_random_string(6)
+        version = auth_util.gen_random_string(10)
         version, err = obj_storage.init(bucket=email, version=version)
         if err:
             return (None, "storage_init_err")
