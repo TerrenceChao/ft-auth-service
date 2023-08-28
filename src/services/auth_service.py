@@ -83,7 +83,7 @@ class AuthService:
         self,
         email: EmailStr,
         data: Any,
-        client_region: str,
+        current_region: str,
         auth_db: Any,
         account_db: Any,
         obj_storage: Any
@@ -93,7 +93,7 @@ class AuthService:
         # 透過 auth_service.funcntion(...) 判斷是否允許 login/signup; 並且調整註解
 
         # 1. 驗證登入資訊
-        aid, err = self.__validation(email, data, client_region, auth_db, obj_storage)
+        aid, err = self.__validation(email, data, current_region, auth_db, obj_storage)
         if err:
             return (None, err)
         
@@ -193,7 +193,7 @@ class AuthService:
         self,
         email: EmailStr,
         data: Any,
-        client_region: str,
+        current_region: str,
         auth_db: Any,
         obj_storage: Any
     ) -> Tuple[Union[Any, None], Union[str, None]]:
@@ -215,7 +215,7 @@ class AuthService:
                 return (None, "not_registered")
 
             # email_info, S3 有，但是這地區的 DB 沒有，有可能在其他地區的 DB
-            elif "region" in email_info and email_info["region"] != client_region:
+            elif "region" in email_info and email_info["region"] != current_region:
                 return (email_info, "wrong_region")
 
             else:

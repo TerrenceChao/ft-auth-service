@@ -86,7 +86,7 @@ def login(
     email: EmailStr = Body(...),
     meta: str = Body(...), # ex: "{\"region\":\"jp\",\"pass\":\"secret\"}"
     pubkey: str = Body(...),
-    client_region: str = Body(...),
+    current_region: str = Body(...),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
     obj_storage: Any = Depends(get_global_object_storage)
@@ -95,7 +95,7 @@ def login(
     res, err = auth_service.login(
         email=email,
         data=data,
-        client_region=client_region,
+        current_region=current_region,
         auth_db=auth_db,
         account_db=account_db,
         obj_storage=obj_storage
