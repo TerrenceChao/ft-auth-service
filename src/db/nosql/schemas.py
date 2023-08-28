@@ -27,7 +27,9 @@ class Account(BaseModel):
     region: str
     email: EmailStr
     email2: Optional[EmailStr] = None
-    in_active: bool = True
+    # TODO: [2]. Close/disable account
+    # 考慮三個月內 同用戶無法註冊/登入的機制；是否需要加上 [is_active = False狀態] 的 timestamp?
+    is_active: bool = True # True: 開啟帳號, False: 關閉帳號
     role: str
     role_id: Optional[int] = None
     auth: BaseAuth

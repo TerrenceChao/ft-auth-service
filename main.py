@@ -14,6 +14,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from src.routers.v1 import auth
 
+# TODO: 在 src/routers/v2/auth.py 新增 routers 做 API:
+# [1]. Update password
+# [2]. Close/disable account
+# [3]. Forgot password
 
 router_v1 = APIRouter(prefix="/auth/api/v1")
 router_v1.include_router(auth.router)

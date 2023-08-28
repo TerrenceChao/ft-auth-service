@@ -66,6 +66,9 @@ class AuthService:
         account_data, err = self.__generate_account_data(email, data, email_info_or_version, obj_storage)
         if err:
             return (None, err)
+        
+        # TODO: [2]. Close/disable account
+        # 透過 auth_service.funcntion(...) 判斷是否允許 login/signup; 並且調整註解
 
         # 3. 將帳戶資料寫入 DB
         return self.__save_account_data(email, account_data, auth_db, account_db, obj_storage)
@@ -85,6 +88,10 @@ class AuthService:
         account_db: Any,
         obj_storage: Any
     ): # -> Tuple[Union[Any, None], Union[str, None]]:
+        
+        # TODO: [2]. Close/disable account
+        # 透過 auth_service.funcntion(...) 判斷是否允許 login/signup; 並且調整註解
+
         # 1. 驗證登入資訊
         aid, err = self.__validation(email, data, client_region, auth_db, obj_storage)
         if err:
@@ -238,3 +245,15 @@ class AuthService:
         return (res, None)
 
 
+    # TODO: [2]. Close/disable account
+    # 新增一個 funcntion 判斷是否允許 login/signup：
+    # 1. 是否在三個月內有被停用，
+    #       若無，則繼續執行其他程序
+    #       若有，且在三個月內，則 API直接回傳 "account_closed"
+    #       若有，且超過三個月，則 "請開發者決定" 是否允許重新開啟帳號? 並允許login/signup????? 後面的機制如何? 
+    # 2. 注意 error handling
+
+    # TODO: 新增 functions 做 API:
+    # [1]. Update password
+    # [2]. Close/disable account
+    # [3]. Forgot password
