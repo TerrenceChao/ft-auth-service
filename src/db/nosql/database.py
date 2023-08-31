@@ -42,13 +42,10 @@ def get_client():
 
 
 def client_err_msg(e: ClientError):
-    if DYNAMODB_URL == LOCAL_DB:
-        if e.response['Error']['Code'] == "ConditionalCheckFailedException":
-            return e.response['Error']['Message']
-        else:
-            return e.__str__()
+    if e.response['Error']['Message']:
+        return e.response['Error']['Message']
     else:
-        e.msg
+        return e.__str__()
 
 
 def response_success(res):

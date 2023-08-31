@@ -76,7 +76,8 @@ class AuthRepository(IAuthRepository):
                     "aid": data["aid"],
                     "pass_hash": data["pass_hash"],
                     "pass_salt": data["pass_salt"],
-                }
+                },
+                ConditionExpression='attribute_not_exists(email) AND attribute_not_exists(aid)'
             )
             # 1. fail -> return
             if not response_success(auth_res):
@@ -95,7 +96,8 @@ class AuthRepository(IAuthRepository):
                     "role": data["role"],
                     "role_id": data["role_id"],
                     "type": data["type"], # account_type: ft, fb, or google
-                }
+                },
+                ConditionExpression='attribute_not_exists(aid) AND attribute_not_exists(email)'
             )
 
             if not response_success(acc_res):
