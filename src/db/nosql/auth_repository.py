@@ -96,6 +96,7 @@ class AuthRepository(IAuthRepository):
                     "role": data["role"],
                     "role_id": data["role_id"],
                     "type": data["type"], # account_type: ft, fb, or google
+                    "created_at": data["created_at"],
                 },
                 ConditionExpression='attribute_not_exists(aid) AND attribute_not_exists(email)'
             )

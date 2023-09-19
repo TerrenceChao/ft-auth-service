@@ -181,6 +181,7 @@ class AuthService:
             "region": res["region"],
             "role": res["role"],
             "role_id": res["role_id"],
+            "created_at": res["created_at"],
         }, None) # all good!
     
     
@@ -241,7 +242,7 @@ class AuthService:
             log.error(f"/login find_account fail, err:{err}")
             return (None, "db_read_error")
         
-        res = auth_util.filter_by_keys(res, ["email", "region", "role", "role_id"]) 
+        res = auth_util.filter_by_keys(res, ["email", "region", "role", "role_id", "created_at"]) 
         return (res, None)
 
 

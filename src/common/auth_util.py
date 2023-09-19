@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import time
 from datetime import date, datetime
 from typing import List
 from snowflake import SnowflakeGenerator
@@ -48,12 +49,18 @@ def gen_random_string(length):
     # choose from all lowercase letter
     return ''.join(random.choice(letters) for i in range(length))
 
+
+def shift_decimal(number, places):
+    return number * (10 ** places)
+
+
 def gen_account_data(data: dict, account_type: str):
     aid = gen_snowflake_id()
     role_id = gen_snowflake_id()
     pass_salt = gen_random_string(12)
     password_data = str(data["pass"] + pass_salt).encode("utf-8")
     pass_hash = hashlib.sha224(password_data).hexdigest()
+    created_at = int(shift_decimal(time.time(), 3))
 
     return {
         # auth
@@ -71,6 +78,7 @@ def gen_account_data(data: dict, account_type: str):
         "is_active": True,
         "role": data["role"],
         "role_id": role_id,
+        "created_at": created_at,
     }
 
 
@@ -83,8 +91,5 @@ def filter_by_keys(data, ary):
     result = {}
     for field in ary:
         result[field] = data[field]
-        
-    if "role_id" in result:
-        result["role_id"] = result["role_id"]
         
     return result
