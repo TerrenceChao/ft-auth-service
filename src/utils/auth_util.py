@@ -6,8 +6,11 @@ from datetime import date, datetime
 from typing import List
 from snowflake import SnowflakeGenerator
 import hashlib
+from ..config.settings import TOKEN_EXPIRE_TIME
+import logging as log
 
-TOKEN_EXPIRE_TIME = int(os.getenv("TOKEN_EXPIRE_TIME", 60 * 60 * 24 * 30))
+log.basicConfig(filemode='w', level=log.INFO)
+
 
 # TODO: asymmetric encrypt/decrypt
 def get_public_key(ts):
