@@ -7,16 +7,12 @@ import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
-from .database import client_err_msg, response_success
+from ...configs.settings import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
+from ...configs.database import client_err_msg, response_success
 from ...repositories.auth_repository import IAuthRepository
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
-
-TABLE_AUTH = os.getenv("TABLE_AUTH", "auth")
-TABLE_ACCOUNT = os.getenv("TABLE_ACCOUNT", "accounts")
-BATCH_LIMIT = int(os.getenv("BATCH_LIMIT", "20"))
-
 
 class AuthRepository(IAuthRepository):
     def __init__(self):

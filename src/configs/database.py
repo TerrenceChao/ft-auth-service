@@ -1,13 +1,10 @@
 import os
 import boto3
 import logging as log
+from .settings import LOCAL_DB, DYNAMODB_URL
 from botocore.exceptions import ClientError
 
 log.basicConfig(filemode='w', level=log.INFO)
-
-
-LOCAL_DB = "http://localhost:8000"
-DYNAMODB_URL = os.getenv("DYNAMODB_URL", LOCAL_DB)
 
 
 def get_db():

@@ -2,12 +2,10 @@ import io
 import os
 import json
 import boto3
+from ..configs.settings import FT_BUCKET
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
-
-
-FT_BUCKET = os.getenv("FT_BUCKET", "foreign-teacher")
 
 
 s3 = boto3.resource("s3")

@@ -6,7 +6,7 @@ from datetime import date, datetime
 from typing import List
 from snowflake import SnowflakeGenerator
 import hashlib
-from ..config.settings import TOKEN_EXPIRE_TIME
+from ..configs.settings import TOKEN_EXPIRE_TIME
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)

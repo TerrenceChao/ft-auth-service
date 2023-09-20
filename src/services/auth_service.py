@@ -1,7 +1,7 @@
 from typing import Any, Union, Tuple, Callable
 from pydantic import EmailStr
 from ..db.nosql.auth_repository import AuthRepository
-from ..common import auth_util
+from ..utils import auth_util
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
