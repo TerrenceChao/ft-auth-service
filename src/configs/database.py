@@ -1,7 +1,7 @@
 import os
 import boto3
 import logging as log
-from .settings import LOCAL_DB, DYNAMODB_URL
+from .conf import LOCAL_DB, DYNAMODB_URL
 from botocore.exceptions import ClientError
 
 log.basicConfig(filemode='w', level=log.INFO)

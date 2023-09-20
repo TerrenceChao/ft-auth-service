@@ -2,7 +2,7 @@ import io
 import os
 import json
 import boto3
-from ..configs.settings import FT_BUCKET
+from ..configs.conf import FT_BUCKET
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
