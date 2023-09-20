@@ -1,14 +1,15 @@
-from typing import Any, Union, Tuple
+from typing import Any, Union, Tuple, Callable
 from pydantic import EmailStr
 from ..db.nosql.auth_repository import AuthRepository
-from ..common import auth_util, email_util
+from ..common import auth_util
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
 class AuthService:
-    def __init__(self, auth_repo: AuthRepository) -> None:
+    def __init__(self, auth_repo: AuthRepository, send_conform_code: Callable[[str, str], None]) -> None:
         self.auth_repo = auth_repo
+        self.send_conform_code = send_conform_code
         pass
 
 
@@ -32,13 +33,13 @@ class AuthService:
         sendby = str(sendby).lower()
         if res == None:
             if sendby == "no_exist":
-                await email_util.send_conform_code(email=email, confirm_code=confirm_code)
+                await self.send_conform_code(email=email, confirm_code=confirm_code)
                 return ("email_sent", None)
             return (None, "email_not_found")
         
         else:
             if sendby == "registered":
-                await email_util.send_conform_code(email=email, confirm_code=confirm_code)
+                await self.send_conform_code(email=email, confirm_code=confirm_code)
                 return ("email_sent", None)
             return (None, "email_registered")
 

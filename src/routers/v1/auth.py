@@ -1,5 +1,4 @@
-import json
-from typing import List, Dict, Any
+from typing import Any
 from fastapi import APIRouter, \
     Request, Depends, \
     Cookie, Header, Path, Query, Body, Form, \
@@ -9,14 +8,14 @@ from pydantic import EmailStr
 from ..res.response import res_success, res_err
 from ...services.auth_service import AuthService
 from ...common.auth_util import get_public_key, decrypt_meta
-from ...common.global_object_storage import get_global_object_storage
+from ...storage.global_object_storage import get_global_object_storage
 from ...db.nosql.database import get_db, get_client
 from ...db.nosql.auth_repository import AuthRepository
-from ..exceptions import BusinessEception
+from ...events.email import send_conform_code
 import logging as log
 log.basicConfig(filemode='w', level=log.INFO)
 
-auth_service = AuthService(auth_repo=AuthRepository())
+auth_service = AuthService(auth_repo=AuthRepository(), send_conform_code=send_conform_code)
 
 router = APIRouter(
     prefix="/auth-nosql",
