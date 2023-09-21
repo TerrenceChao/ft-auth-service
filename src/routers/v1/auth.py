@@ -15,6 +15,7 @@ from ...common.email_util import send_conform_code
 from ...db.nosql.database import get_db, get_client
 from ...db.nosql import schemas, auth_repository
 from ..exceptions import BusinessEception
+from ..schemas.auth import ResetPasswordPayload
 import logging as log
 
 log.basicConfig(level=log.INFO)
@@ -183,3 +184,15 @@ def login(
     
     res = filter_by_keys(res, ["email", "region", "role", "role_id"]) 
     return res_success(data=res)
+
+@router.post('/reset_password')
+def reset_password(
+    payload: ResetPasswordPayload,
+    auth_db: Any = Depends(get_db),
+):
+    err = auth_repo.reset_password(auth_db, payload.aid, payload.password1)
+    if err != None:
+        log.error(f"/reset_password fail, err:{err}")
+        return res_err(msg=err)
+
+    return res_success(msg='password modified')
