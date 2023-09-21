@@ -7,9 +7,9 @@ import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
-from ...configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
-from ...configs.database import client_err_msg, response_success
-from ...repositories.auth_repository import IAuthRepository
+from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
+from ....configs.database import client_err_msg, response_success
+from ....repositories.auth_repository import IAuthRepository
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
