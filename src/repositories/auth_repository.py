@@ -26,4 +26,6 @@ class IAuthRepository(ABC):
     def find_account(self, db: Any, aid: Decimal):
         pass
 
-
+    @abstractmethod
+    def reset_password(self, db: Any, aid: Decimal, pw: str):
+        pass

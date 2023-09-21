@@ -1,5 +1,6 @@
 import os
 import json
+import hashlib
 from typing import Dict, List, Any, Optional
 from decimal import Decimal
 from pydantic import EmailStr
@@ -11,6 +12,7 @@ from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
 from ....configs.database import client_err_msg, response_success
 from ....repositories.auth_repository import IAuthRepository
 import logging as log
+from src.common.auth_util import gen_random_string
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -222,3 +224,28 @@ class AuthRepository(IAuthRepository):
             err_msg = e.__str__()
 
         return result, err_msg
+
+    def reset_password(self, db: Any, aid: Decimal, pw: str) -> Optional[str]:
+        err_msg: Optional[str] = None
+
+        pass_salt = gen_random_string(12)
+        password_data = str(pw + pass_salt).encode("utf-8")
+        pass_hash = hashlib.sha224(password_data).hexdigest()
+
+        try:
+            #1. find auth by aid
+            auth_table = db.Table(TABLE_AUTH)
+            log.info(auth_table)
+            auth_table.update_item(
+                Key={'aid': aid},
+                UpdateExpression="set pass_salt=:ps, pass_hash=:ph",
+                ExpressionAttributeValues={
+                    ':ps': pass_salt, ':ph': pass_hash},
+                ReturnValues="UPDATED_NEW")
+        except ClientError as e:
+            err_msg = client_err_msg(e)
+
+        except Exception as e:
+            err_msg = e.__str__()
+
+        return err_msg

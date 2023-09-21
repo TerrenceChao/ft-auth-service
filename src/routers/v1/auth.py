@@ -13,6 +13,7 @@ from ...infra.utils.auth_util import get_public_key, decrypt_meta
 from ...infra.db.nosql.auth_repository import AuthRepository
 from ...infra.storage.global_object_storage import GlobalObjectStorage
 from ...infra.apis.email import send_conform_code
+from ..schemas.auth import ResetPasswordPayload
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -110,3 +111,15 @@ def login(
         return res_err(data=res, msg=err)
 
     return res_success(data=res)
+
+@router.post('/reset_password')
+def reset_password(
+    payload: ResetPasswordPayload,
+    auth_db: Any = Depends(get_db),
+):
+    err = auth_repo.reset_password(auth_db, payload.aid, payload.password1)
+    if err != None:
+        log.error(f"/reset_password fail, err:{err}")
+        return res_err(msg=err)
+
+    return res_success(msg='password modified')
