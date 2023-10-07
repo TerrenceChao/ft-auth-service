@@ -27,5 +27,5 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    def reset_password(self, db: Any, aid: Decimal, pw: str):
+    def update_password(self, db: Any, aid: Decimal, pw: str):
         pass

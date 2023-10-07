@@ -12,7 +12,7 @@ from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
 from ....configs.database import client_err_msg, response_success
 from ....repositories.auth_repository import IAuthRepository
 import logging as log
-from src.common.auth_util import gen_random_string
+from src.infra.utils import auth_util 
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -225,17 +225,19 @@ class AuthRepository(IAuthRepository):
 
         return result, err_msg
 
-    def reset_password(self, db: Any, aid: Decimal, pw: str) -> Optional[str]:
+    def update_password(self, db: Any, aid: Decimal, new_pw: str, origin_pw: Optional[str] = None) -> Optional[str]:
         err_msg: Optional[str] = None
 
-        pass_salt = gen_random_string(12)
-        password_data = str(pw + pass_salt).encode("utf-8")
+        pass_salt = auth_util.gen_random_string(12)
+        password_data = str(new_pw + pass_salt).encode("utf-8")
         pass_hash = hashlib.sha224(password_data).hexdigest()
 
         try:
             #1. find auth by aid
             auth_table = db.Table(TABLE_AUTH)
-            log.info(auth_table)
+            if origin_pw is not None and not _is_pw_valid(table=auth_table, aid=aid, pw=origin_pw):
+                return "error_password"
+
             auth_table.update_item(
                 Key={'aid': aid},
                 UpdateExpression="set pass_salt=:ps, pass_hash=:ph",
@@ -249,3 +251,19 @@ class AuthRepository(IAuthRepository):
             err_msg = e.__str__()
 
         return err_msg
+
+def _is_pw_valid(table: Any, aid: str, pw: str) -> bool:
+        res = table.get_item(Key={"aid": aid})
+
+        if not "Item" in res:
+            return False
+
+        auth = res["Item"]
+
+        pass_hash = auth["pass_hash"]
+        pass_salt = auth["pass_salt"]
+
+        if not auth_util.match_password(pass_hash=pass_hash, pw=pw, pass_salt=pass_salt):
+            return False
+        
+        return True

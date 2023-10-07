@@ -1,5 +1,6 @@
-from typing import Any, Union, Callable
+from typing import Any, Union, Callable, Optional
 from pydantic import EmailStr
+from decimal import Decimal
 from ..repositories.auth_repository import IAuthRepository
 from ..repositories.object_storage import IObjectStorage
 from ..infra.utils import auth_util
@@ -99,6 +100,9 @@ class AuthService:
 
         # 2. 取得帳戶資料
         return self.__find_account(aid, account_db)
+    
+    def update_password(self, db: Any, aid: Decimal, new_pw: str, origin_pw: Optional[str] = None) -> Optional[str]:
+        return self.auth_repo.update_password(db=db, aid=aid, new_pw=new_pw, origin_pw=origin_pw)
 
     """
     檢查 email 有沒註冊過

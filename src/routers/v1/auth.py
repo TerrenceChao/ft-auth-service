@@ -111,15 +111,3 @@ def login(
         return res_err(data=res, msg=err)
 
     return res_success(data=res)
-
-@router.post('/reset_password')
-def reset_password(
-    payload: ResetPasswordPayload,
-    auth_db: Any = Depends(get_db),
-):
-    err = auth_repo.reset_password(auth_db, payload.aid, payload.password1)
-    if err != None:
-        log.error(f"/reset_password fail, err:{err}")
-        return res_err(msg=err)
-
-    return res_success(msg='password modified')
