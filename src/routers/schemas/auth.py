@@ -1,8 +1,9 @@
 from pydantic import BaseModel, validator
 from typing import Optional
+from decimal import Decimal
 
 class ResetPasswordPayload(BaseModel):
-    aid: str
+    aid: Decimal 
     origin_password: Optional[str] = None
     password1: str
     password2: str

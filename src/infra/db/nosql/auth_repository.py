@@ -1,16 +1,16 @@
 import os
 import json
-import hashlib
-from typing import Dict, List, Any, Optional
+
+from typing import Dict, List, Any, Optional, Tuple
 from decimal import Decimal
-from pydantic import EmailStr
+from pydantic import EmailStr, BaseModel
 import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
 from ....configs.database import client_err_msg, response_success
-from ....repositories.auth_repository import IAuthRepository
+from ....repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 import logging as log
 from src.infra.utils import auth_util 
 
@@ -225,25 +225,43 @@ class AuthRepository(IAuthRepository):
 
         return result, err_msg
 
-    def update_password(self, db: Any, aid: Decimal, new_pw: str, origin_pw: Optional[str] = None) -> Optional[str]:
-        err_msg: Optional[str] = None
-
-        pass_salt = auth_util.gen_random_string(12)
-        password_data = str(new_pw + pass_salt).encode("utf-8")
-        pass_hash = hashlib.sha224(password_data).hexdigest()
+    def find_auth(self, db: Any, aid: Decimal):
+        err_msg: str = None
+        result = None
 
         try:
-            #1. find auth by aid
+            # 1. find auth by aid
+            table = db.Table(TABLE_AUTH)
+            log.info(table)
+            res = table.get_item(Key={'aid': aid})
+
+            result = res['Item']
+
+        except ClientError as e:
+            err_msg = client_err_msg(e)
+
+        except Exception as e:
+            err_msg = e.__str__()
+
+        return result, err_msg
+
+    def update_password(
+        self, db: Any, update_password_params: UpdatePasswordParams
+    ) -> Optional[str]:
+        err_msg: Optional[str] = None
+
+        try:
             auth_table = db.Table(TABLE_AUTH)
-            if origin_pw is not None and not _is_pw_valid(table=auth_table, aid=aid, pw=origin_pw):
-                return "error_password"
 
             auth_table.update_item(
-                Key={'aid': aid},
-                UpdateExpression="set pass_salt=:ps, pass_hash=:ph",
+                Key={'aid': update_password_params.aid},
+                UpdateExpression='set pass_salt=:ps, pass_hash=:ph',
                 ExpressionAttributeValues={
-                    ':ps': pass_salt, ':ph': pass_hash},
-                ReturnValues="UPDATED_NEW")
+                    ':ps': update_password_params.pass_salt,
+                    ':ph': update_password_params.pass_hash,
+                },
+                ReturnValues='UPDATED_NEW',
+            )
         except ClientError as e:
             err_msg = client_err_msg(e)
 
@@ -251,19 +269,3 @@ class AuthRepository(IAuthRepository):
             err_msg = e.__str__()
 
         return err_msg
-
-def _is_pw_valid(table: Any, aid: str, pw: str) -> bool:
-        res = table.get_item(Key={"aid": aid})
-
-        if not "Item" in res:
-            return False
-
-        auth = res["Item"]
-
-        pass_hash = auth["pass_hash"]
-        pass_salt = auth["pass_salt"]
-
-        if not auth_util.match_password(pass_hash=pass_hash, pw=pw, pass_salt=pass_salt):
-            return False
-        
-        return True
