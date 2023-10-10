@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request, \
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
+from src.configs import exceptions
 from src.routers.v1 import auth
 
 # TODO: 在 src/routers/v2/auth.py 新增 routers 做 API:
@@ -26,8 +27,9 @@ router_v1.include_router(auth.router)
 STAGE = os.environ.get('STAGE')
 root_path = '/' if not STAGE else f'/{STAGE}'
 app = FastAPI(title="ForeignTeacher: Auth Service", root_path=root_path)
-app.include_router(router_v1)
+exceptions.include_app(app)
 
+app.include_router(router_v1)
 
 class BusinessEception(Exception):
     def __init__(self, term: str):

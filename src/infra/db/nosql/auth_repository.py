@@ -9,6 +9,7 @@ from botocore.exceptions import ClientError
 
 from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
 from ....configs.database import client_err_msg, response_success
+from ....configs.exceptions import *
 from ....repositories.auth_repository import IAuthRepository
 import logging as log
 
@@ -16,10 +17,11 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 class AuthRepository(IAuthRepository):
     def __init__(self):
-        pass
+        self.__cls_name = self.__class__.__name__
 
     def get_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr, fields: List):
-        err_msg: str = None
+        auth_res = None
+        acc_res = None
         account = None
 
         try:
@@ -29,7 +31,7 @@ class AuthRepository(IAuthRepository):
             auth_res = auth_table.get_item(Key={"email": email})
             # 1. fail -> return
             if not "Item" in auth_res:
-                return account, None  # err = None
+                return None
 
             auth = auth_res["Item"]
 
@@ -40,8 +42,9 @@ class AuthRepository(IAuthRepository):
             acc_table = account_db.Table(TABLE_ACCOUNT)
             log.info(acc_table)
             acc_res = acc_table.get_item(Key={"aid": aid})
+            # 3. fail -> raise NotFoundError
             if not "Item" in acc_res:
-                return account, "auth_data_without_account"  # err = None
+                raise NotFoundError('there_is_auth_data_but_no_account_data')
 
             account_item = acc_res["Item"]
 
@@ -49,17 +52,32 @@ class AuthRepository(IAuthRepository):
             account = {}
             for field in fields:
                 account[field] = account_item[field]
-
+                
+            return account
+        
         except ClientError as e:
-            err_msg = client_err_msg(e)
+            log.error(f'{self.__cls_name}.get_account_by_email error [read_req_error], \
+                email:%s fields:%s, auth_res:%s, acc_res:%s, account:%s, err:%s', 
+                email, fields, auth_res, acc_res, account, client_err_msg(e))
+            raise Exception('read_req_error')
+        
+        except NotFoundError as e:
+            log.error(f'{self.__cls_name}.get_account_by_email error [there_is_auth_data_but_no_account_data], \
+                email:%s fields:%s, auth_res:%s, acc_res:%s, account:%s, err:%s', 
+                email, fields, auth_res, acc_res, account,  e.__str__())
+            raise Exception(e.__str__())
 
         except Exception as e:
-            err_msg = e.__str__()
+            log.error(f'{self.__cls_name}.get_account_by_email error [db_read_error], \
+                email:%s fields:%s, auth_res:%s, acc_res:%s, account:%s, err:%s', 
+                email, fields, auth_res, acc_res, account, e.__str__())
+            raise Exception('db_read_error')
 
-        return account, err_msg
+        
 
     def create_account(self, auth_db: Any, account_db: Any, email: EmailStr, data: Any):
-        err_msg: str = None
+        auth_res = None
+        acc_res = None
         account = None
 
         try:
@@ -77,7 +95,7 @@ class AuthRepository(IAuthRepository):
             )
             # 1. fail -> return
             if not response_success(auth_res):
-                return account, "insert_auth_fail"
+                raise Exception("insert_auth_fail")
 
             # 2. create account
             acc_table = account_db.Table(TABLE_ACCOUNT)
@@ -98,21 +116,29 @@ class AuthRepository(IAuthRepository):
             )
 
             if not response_success(acc_res):
-                return account, "insert_account_fail"
+                raise Exception("insert_account_fail")
 
             account_item = acc_table.get_item(Key={"aid": data["aid"]})
             account = account_item["Item"]
+            
+            return account
 
         except ClientError as e:
-            err_msg = client_err_msg(e)
+            log.error(f'{self.__cls_name}.create_account error [insert_req_error], \
+                email:%s auth_res:%s, acc_res:%s, err:%s', 
+                email, auth_res, acc_res, client_err_msg(e))
+            raise Exception('insert_req_error')
 
         except Exception as e:
-            err_msg = e.__str__()
+            log.error(f'{self.__cls_name}.create_account error [db_insert_error], \
+                email:%s auth_res:%s, acc_res:%s, err:%s', 
+                email, auth_res, acc_res, e.__str__())
+            raise Exception('db_insert_error')
 
-        return account, err_msg
 
     def delete_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr):
-        err_msg: str = None
+        auth_res = None
+        acc_del_res = None
         deleted = False
 
         try:
@@ -123,14 +149,14 @@ class AuthRepository(IAuthRepository):
             # 1. fail -> auth not found
             # log.debug("step 1 \b %s", auth_res)
             if not "Item" in auth_res:
-                return deleted, "auth_not_found"
+                raise Exception("auth_not_found")
 
             # 2. delete auth by email
             auth = auth_res["Item"]
             auth_del_res = auth_table.delete_item(Key={"email": email})
             # 2. fail -> delete auth fail
             if not response_success(auth_res):
-                return deleted, "delete_auth_fail"
+                raise Exception("delete_auth_fail")
 
             # 3. get aid from auth
             aid = auth["aid"]
@@ -150,75 +176,71 @@ class AuthRepository(IAuthRepository):
                     ExpressionAttributeValues={":is_active": False},
                     ReturnValues="UPDATED_NEW"
                 )
-                return deleted, "delete_account_fail"
+                raise Exception("delete_account_fail")
 
             # delete both auth & account
             deleted = True
+            return deleted
 
         except ClientError as e:
-            err_msg = client_err_msg(e)
+            log.error(f'{self.__cls_name}.delete_account_by_email error [delete_req_error], \
+                email:%s auth_res:%s, acc_del_res:%s, err:%s', 
+                email, auth_res, acc_del_res, client_err_msg(e))
+            raise Exception('delete_req_error')
 
         except Exception as e:
-            err_msg = e.__str__()
+            log.error(f'{self.__cls_name}.delete_account_by_email error [db_delete_error], \
+                email:%s auth_res:%s, acc_del_res:%s, err:%s', 
+                email, auth_res, acc_del_res, e.__str__())
+            raise Exception('db_delete_error')
 
-        return deleted, err_msg
 
-    def authentication(self, db: Any, email: EmailStr, pw: str, match_password: Any):
-        err_msg: str = None
+    def get_auth_by_email(self, db: Any, email: EmailStr):
+        res = None
         result = None
 
         try:
-            # 1. find auth by email
             table = db.Table(TABLE_AUTH)
             log.info(table)
             res = table.get_item(Key={"email": email})
-            # log.debug("step 1 %s", res)
-
-            # TODO: check not_registered
-            # 1. not_registered
-            if not "Item" in res:
-                # log.debug("step 1 not_registered")
-                return result, "not_registered"
-
-            auth = res["Item"]
-            # log.debug("step 2 %s", auth)
-
-            # 2. get pass info
-            pass_hash = auth["pass_hash"]
-            pass_salt = auth["pass_salt"]
-
-            # TODO: error_password
-            # 3. validation password by match_password
-            if not match_password(pass_hash=pass_hash, pw=pw, pass_salt=pass_salt):
-                return result, "error_password"
-
-            # log.debug("step 3 %s", type(auth["aid"]))
-            # 4. return aid
-            result = auth["aid"]
+            if 'Item' in res:
+                result = res["Item"]
+            
+            return result
 
         except ClientError as e:
-            err_msg = client_err_msg(e)
+            log.error(f'{self.__cls_name}.get_auth_by_email error [read_req_error], \
+                email:%s res:%s, err:%s', email, res, client_err_msg(e))
+            raise Exception('read_req_error')
 
         except Exception as e:
-            err_msg = e.__str__()
+            log.error(f'{self.__cls_name}.get_auth_by_email error [db_read_error], \
+                email:%s res:%s, err:%s', email, res, e.__str__())
+            raise Exception('db_read_error')
 
-        return result, err_msg
 
     def find_account(self, db: Any, aid: Decimal):
-        err_msg: str = None
+        res = None
         result = None
-
+        
         try:
             # 1. find account by aid
             table = db.Table(TABLE_ACCOUNT)
             log.info(table)
             res = table.get_item(Key={"aid": aid})
-            result = res["Item"]
+            if 'Item' in res:
+                result = res["Item"]
+            
+            return result
 
         except ClientError as e:
-            err_msg = client_err_msg(e)
+            err = client_err_msg(e)
+            log.error(f'{self.__cls_name}.find_account error [read_req_error], \
+                aid:%s res:%s, err:%s', aid, res, err)
+            raise Exception('read_req_error')
 
         except Exception as e:
-            err_msg = e.__str__()
-
-        return result, err_msg
+            err = e.__str__()
+            log.error(f'{self.__cls_name}.find_account error [db_read_error], \
+                aid:%s res:%s, err:%s', aid, res, err)
+            raise Exception('db_read_error')

@@ -19,7 +19,7 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    def authentication(self, db: Any, email: EmailStr, pw: str, match_password: Any):
+    def get_auth_by_email(self, db: Any, email: EmailStr):
         pass
 
     @abstractmethod
