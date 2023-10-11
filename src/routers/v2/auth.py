@@ -12,15 +12,15 @@ from fastapi import APIRouter, \
     File, UploadFile, status, \
     HTTPException
 from pydantic import EmailStr
+from ..req.auth_validation import ResetPasswordPayload
 from ..res.response import res_success, res_err
 from ...services.auth_service import AuthService
 from ...configs.database import get_db, get_client
 from ...configs.s3 import get_s3_resource
-from ...infra.utils.auth_util import get_public_key, decrypt_meta
+from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
 from ...infra.storage.global_object_storage import GlobalObjectStorage
 from ...infra.apis.email import send_conform_code
-from ..schemas.auth import ResetPasswordPayload
 import logging as log
 
 
@@ -44,7 +44,7 @@ def update_password(
     payload: ResetPasswordPayload,
     auth_db: Any = Depends(get_db),
 ):
-    err = auth_service.update_password(auth_db, payload.aid, payload.password1, payload.origin_password)
+    err = auth_service.update_password(auth_db, payload.register_email, payload.password1, payload.origin_password)
     if err != None:
         log.error(f"/update_password fail, err:{err}")
         return res_err(msg=err)

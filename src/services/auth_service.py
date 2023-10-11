@@ -152,23 +152,22 @@ class AuthService:
     
 
     def update_password(
-        self, db: Any, aid: Decimal, new_pw: str, origin_pw: Optional[str] = None
+        self, db: Any, email: EmailStr, new_pw: str, origin_pw: Optional[str] = None
     ) -> Optional[str]:
         pass_salt = auth_util.gen_random_string(12)
-        password_data = str(new_pw + pass_salt).encode("utf-8")
         params = UpdatePasswordParams(
-            aid=aid,
+            email=email,
             pass_salt=pass_salt,
-            pass_hash=hashlib.sha224(password_data).hexdigest(),
+            pass_hash=auth_util.gen_password_hash(new_pw, pass_salt),
         )
         if origin_pw:
-            account_data, err = self.auth_repo.find_auth(db=db, aid=aid)
+            account_data, err = self.auth_repo.find_auth(db=db, email=email)
             if err is not None:
                 return err
             if not auth_util.match_password(
                 pass_hash=account_data['pass_hash'], pw=origin_pw, pass_salt=account_data['pass_salt']
             ):
-                return "Invalid Passwrod"
+                return "Invalid Password"
 
         return self.auth_repo.update_password(db=db, update_password_params=params)
 

@@ -6,7 +6,7 @@ from pydantic import EmailStr, BaseModel
 class UpdatePasswordParams(BaseModel):
     pass_hash: str
     pass_salt: str
-    aid: Decimal
+    email: EmailStr
 
 
 class IAuthRepository(ABC):
@@ -32,7 +32,7 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    def find_auth(self, db: Any, aid: Decimal):
+    def find_auth(self, db: Any, email: EmailStr):
         pass
 
     @abstractmethod

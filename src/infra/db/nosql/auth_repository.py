@@ -248,7 +248,7 @@ class AuthRepository(IAuthRepository):
             raise Exception('db_read_error')
 
 
-    def find_auth(self, db: Any, aid: Decimal):
+    def find_auth(self, db: Any, email: EmailStr):
         err_msg: str = None
         result = None
 
@@ -256,7 +256,7 @@ class AuthRepository(IAuthRepository):
             # 1. find auth by aid
             table = db.Table(TABLE_AUTH)
             log.info(table)
-            res = table.get_item(Key={'aid': int(aid)})
+            res = table.get_item(Key={'email': email})
 
             result = res['Item']
 
@@ -277,7 +277,7 @@ class AuthRepository(IAuthRepository):
             auth_table = db.Table(TABLE_AUTH)
 
             auth_table.update_item(
-                Key={'aid': update_password_params.aid},
+                Key={'email': update_password_params.email},
                 UpdateExpression='set pass_salt=:ps, pass_hash=:ph',
                 ExpressionAttributeValues={
                     ':ps': update_password_params.pass_salt,

@@ -6,7 +6,6 @@ from datetime import date, datetime
 from typing import List
 from snowflake import SnowflakeGenerator
 import hashlib
-from ...configs.conf import TOKEN_EXPIRE_TIME
 from ...configs.exceptions import *
 import logging as log
 
@@ -17,22 +16,6 @@ log.basicConfig(filemode='w', level=log.INFO)
 def get_public_key(ts):
     return "abcdefghijkl"
 
-
-""" 
-TODO: asymmetric encrypt/decrypt
-a. 透過 private 解密出 pass
-b. 產生 pass_salt
-c. gen hash(pass + salt) = pass_hash
-"""
-
-
-def decrypt_meta(meta, pubkey):
-    try:
-        return json.loads(meta)
-    except json.JSONDecodeError as e:
-        log.error(
-            f"func: decrypt_meta error [json_decode_error] meta:%s, err:%s", meta, e.__str__())
-        raise ClientException(msg=f"invalid json format, meta:{meta}")
 
 
 """SnowflakeGenerator group

@@ -1,19 +1,19 @@
-from typing import Any
+from typing import Any, Dict
 from fastapi import APIRouter, \
     Request, Depends, \
     Cookie, Header, Path, Query, Body, Form, \
     File, UploadFile, status, \
     HTTPException
 from pydantic import EmailStr
+from ..req.auth_validation import decrypt_meta
 from ..res.response import res_success, res_err
 from ...services.auth_service import AuthService
 from ...configs.database import get_db, get_client
 from ...configs.s3 import get_s3_resource
-from ...infra.utils.auth_util import get_public_key, decrypt_meta
+from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
 from ...infra.storage.global_object_storage import GlobalObjectStorage
 from ...infra.apis.email import send_conform_code
-from ..schemas.auth import ResetPasswordPayload
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -69,13 +69,11 @@ async def send_conform_code_by_email(
 @router.post("/signup")
 def signup(
     email: EmailStr = Body(...),
-    # ex: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
-    meta: str = Body(...),
-    pubkey: str = Body(...),
+    # meta ex: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
+    data: Dict = Depends(decrypt_meta),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
 ):
-    data = decrypt_meta(meta=meta, pubkey=pubkey)
     res = auth_service.signup(
         email=email,
         data=data,
@@ -89,13 +87,12 @@ def signup(
 @router.post("/login")
 def login(
     email: EmailStr = Body(...),
-    meta: str = Body(...),  # ex: "{\"region\":\"jp\",\"pass\":\"secret\"}"
-    pubkey: str = Body(...),
+    # ex: "{\"region\":\"jp\",\"pass\":\"secret\"}"
+    data: Dict = Depends(decrypt_meta),
     current_region: str = Body(...),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
 ):
-    data = decrypt_meta(meta=meta, pubkey=pubkey)
     res = auth_service.login(
         email=email,
         data=data,
@@ -103,5 +100,5 @@ def login(
         auth_db=auth_db,
         account_db=account_db,
     )
-    
+
     return res_success(data=res)
