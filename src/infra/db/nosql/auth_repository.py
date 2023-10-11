@@ -30,25 +30,25 @@ class AuthRepository(IAuthRepository):
             # 1. get auth
             auth_table = auth_db.Table(TABLE_AUTH)
             log.info(auth_table)
-            auth_res = auth_table.get_item(Key={"email": email})
+            auth_res = auth_table.get_item(Key={'email': email})
             # 1. fail -> return
-            if not "Item" in auth_res:
+            if not 'Item' in auth_res:
                 return None
 
-            auth = auth_res["Item"]
+            auth = auth_res['Item']
 
             # 2. get aid from auth
-            aid = auth["aid"]
+            aid = auth['aid']
 
             # 3. get account by aid
             acc_table = account_db.Table(TABLE_ACCOUNT)
             log.info(acc_table)
-            acc_res = acc_table.get_item(Key={"aid": aid})
+            acc_res = acc_table.get_item(Key={'aid': aid})
             # 3. fail -> raise NotFoundError
-            if not "Item" in acc_res:
+            if not 'Item' in acc_res:
                 raise NotFoundError('there_is_auth_data_but_no_account_data')
 
-            account_item = acc_res["Item"]
+            account_item = acc_res['Item']
 
             # 4. assign fields to result(account)
             account = {}
@@ -88,40 +88,40 @@ class AuthRepository(IAuthRepository):
             log.info(auth_table)
             auth_res = auth_table.put_item(
                 Item={
-                    "email": email,
-                    "aid": data["aid"],
-                    "pass_hash": data["pass_hash"],
-                    "pass_salt": data["pass_salt"],
+                    'email': email,
+                    'aid': data['aid'],
+                    'pass_hash': data['pass_hash'],
+                    'pass_salt': data['pass_salt'],
                 },
                 ConditionExpression='attribute_not_exists(email) AND attribute_not_exists(aid)'
             )
             # 1. fail -> return
             if not response_success(auth_res):
-                raise Exception("insert_auth_fail")
+                raise Exception('insert_auth_fail')
 
             # 2. create account
             acc_table = account_db.Table(TABLE_ACCOUNT)
             log.info(acc_table)
             acc_res = acc_table.put_item(
                 Item={
-                    "aid": data["aid"],
-                    "region": data["region"],
-                    "email": email,
-                    "email2": None,
-                    "is_active": True,
-                    "role": data["role"],
-                    "role_id": data["role_id"],
-                    "type": data["type"], # account_type: ft, fb, or google
-                    "created_at": data["created_at"],
+                    'aid': data['aid'],
+                    'region': data['region'],
+                    'email': email,
+                    'email2': None,
+                    'is_active': True,
+                    'role': data['role'],
+                    'role_id': data['role_id'],
+                    'type': data['type'], # account_type: ft, fb, or google
+                    'created_at': data['created_at'],
                 },
                 ConditionExpression='attribute_not_exists(aid) AND attribute_not_exists(email)'
             )
 
             if not response_success(acc_res):
-                raise Exception("insert_account_fail")
+                raise Exception('insert_account_fail')
 
-            account_item = acc_table.get_item(Key={"aid": data["aid"]})
-            account = account_item["Item"]
+            account_item = acc_table.get_item(Key={'aid': data['aid']})
+            account = account_item['Item']
             
             return account
 
@@ -147,38 +147,38 @@ class AuthRepository(IAuthRepository):
             # 1. find auth by email
             auth_table = auth_db.Table(TABLE_AUTH)
             log.info(auth_table)
-            auth_res = auth_table.get_item(Key={"email": email})
+            auth_res = auth_table.get_item(Key={'email': email})
             # 1. fail -> auth not found
-            # log.debug("step 1 \b %s", auth_res)
-            if not "Item" in auth_res:
-                raise Exception("auth_not_found")
+            # log.debug('step 1 \b %s', auth_res)
+            if not 'Item' in auth_res:
+                raise Exception('auth_not_found')
 
             # 2. delete auth by email
-            auth = auth_res["Item"]
-            auth_del_res = auth_table.delete_item(Key={"email": email})
+            auth = auth_res['Item']
+            auth_del_res = auth_table.delete_item(Key={'email': email})
             # 2. fail -> delete auth fail
             if not response_success(auth_res):
-                raise Exception("delete_auth_fail")
+                raise Exception('delete_auth_fail')
 
             # 3. get aid from auth
-            aid = auth["aid"]
+            aid = auth['aid']
 
             # 4. delete account by aid
             acc_table = account_db.Table(TABLE_ACCOUNT)
             log.info(acc_table)
-            acc_del_res = acc_table.delete_item(Key={"aid": aid})
+            acc_del_res = acc_table.delete_item(Key={'aid': aid})
 
             # 4. delete account fail -> update acccount(is_active = False)
             if not response_success(acc_del_res):
                 # TODO: 因 account 刪除失敗，將 is_active 設定為 False
                 res = acc_table.update_item(
-                    Key={"aid": aid},
-                    UpdateExpression="set #is_active = :is_active",
-                    ExpressionAttributeNames={"#is_active": "is_active"},
-                    ExpressionAttributeValues={":is_active": False},
-                    ReturnValues="UPDATED_NEW"
+                    Key={'aid': aid},
+                    UpdateExpression='set #is_active = :is_active',
+                    ExpressionAttributeNames={'#is_active': 'is_active'},
+                    ExpressionAttributeValues={':is_active': False},
+                    ReturnValues='UPDATED_NEW'
                 )
-                raise Exception("delete_account_fail")
+                raise Exception('delete_account_fail')
 
             # delete both auth & account
             deleted = True
@@ -204,9 +204,9 @@ class AuthRepository(IAuthRepository):
         try:
             table = db.Table(TABLE_AUTH)
             log.info(table)
-            res = table.get_item(Key={"email": email})
+            res = table.get_item(Key={'email': email})
             if 'Item' in res:
-                result = res["Item"]
+                result = res['Item']
             
             return result
 
@@ -229,9 +229,9 @@ class AuthRepository(IAuthRepository):
             # 1. find account by aid
             table = db.Table(TABLE_ACCOUNT)
             log.info(table)
-            res = table.get_item(Key={"aid": aid})
+            res = table.get_item(Key={'aid': aid})
             if 'Item' in res:
-                result = res["Item"]
+                result = res['Item']
             
             return result
 
@@ -258,7 +258,7 @@ class AuthRepository(IAuthRepository):
             log.info(table)
             res = table.get_item(Key={'email': email})
             if 'Item' in res:
-                result = res["Item"]
+                result = res['Item']
             
             return result
 

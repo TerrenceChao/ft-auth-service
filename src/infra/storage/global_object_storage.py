@@ -17,7 +17,7 @@ class GlobalObjectStorage:
         file = None
         key = None
         try:
-            file = json.dumps({"version": version})
+            file = json.dumps({'version': version})
             key = ''.join([str(bucket), '/email_info.json'])
             obj = self.s3.Object(FT_BUCKET, key)
             obj.put(Body=file)
@@ -25,10 +25,10 @@ class GlobalObjectStorage:
             return version
 
         except Exception as e:
-            log.error(f"{self.__cls_name}.init [init file error]\
-                bucket:%s, version:%s, file:%s, key:%s, err:%s", 
+            log.error(f'{self.__cls_name}.init [init file error]\
+                bucket:%s, version:%s, file:%s, key:%s, err:%s', 
                 bucket, version, file, key, e.__str__())
-            raise ServerException(msg="init file fail")
+            raise ServerException(msg='init file fail')
 
 
     def update(self, bucket, version, newdata):
@@ -40,8 +40,8 @@ class GlobalObjectStorage:
             if data is None:
                 raise NotFoundException(msg=f'file:{bucket} not found')
             
-            if "version" in data and data["version"] != version:
-                raise NotFoundException(msg="no version there OR invalid version")
+            if 'version' in data and data['version'] != version:
+                raise NotFoundException(msg='no version there OR invalid version')
 
             data.update(newdata)
             result = json.dumps(data)
@@ -52,16 +52,16 @@ class GlobalObjectStorage:
             return result
         
         except NotFoundException as e:
-            log.error(f"{self.__cls_name}.update [no version found] \
-                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s", 
+            log.error(f'{self.__cls_name}.update [no version found] \
+                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s', 
                 bucket, version, newdata, data, result, key, e.__str__())
             raise NotFoundException(msg=e.__str__())
 
         except Exception as e:
-            log.error(f"{self.__cls_name}.update [update file error] \
-                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s", 
+            log.error(f'{self.__cls_name}.update [update file error] \
+                bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s', 
                 bucket, version, newdata, data, result, key, e.__str__())
-            raise ServerException(msg="update file fail")
+            raise ServerException(msg='update file fail')
 
 
     def delete(self, bucket):
@@ -74,18 +74,18 @@ class GlobalObjectStorage:
             return result
 
         except Exception as e:
-            log.error(f"{self.__cls_name}.delete [delete file error] \
-                bucket:%s, key:%s, result:%s, err:%s", 
+            log.error(f'{self.__cls_name}.delete [delete file error] \
+                bucket:%s, key:%s, result:%s, err:%s', 
                 bucket, key, result, e.__str__())
-            raise ServerException(msg="delete file fail")
+            raise ServerException(msg='delete file fail')
 
 
-    """
+    '''
         return {
-            "email": "abc@gmail.com",
-            "region": "jp",
+            'email': 'abc@gmail.com',
+            'region': 'jp',
         }, None
-    """
+    '''
 
     def find(self, bucket):
         key = None
@@ -107,15 +107,15 @@ class GlobalObjectStorage:
             if e.response['Error']['Code'] == '404':
                 return None
             else:
-                log.error(f"{self.__cls_name}.find [req error] \
-                    bucket:%s, key:%s, result:%s, err:%s", 
+                log.error(f'{self.__cls_name}.find [req error] \
+                    bucket:%s, key:%s, result:%s, err:%s', 
                     bucket, key, result, e.__str__())
-                raise ServerException(msg="req error of find file")
+                raise ServerException(msg='req error of find file')
 
         except Exception as e:
             err = e.__str__()
-            log.error(f"{self.__cls_name}.find [find file error] \
-                bucket:%s, key:%s, result:%s, err:%s", 
+            log.error(f'{self.__cls_name}.find [find file error] \
+                bucket:%s, key:%s, result:%s, err:%s', 
                 bucket, key, result, err)
-            raise ServerException(msg="find file fail")
+            raise ServerException(msg='find file fail')
 

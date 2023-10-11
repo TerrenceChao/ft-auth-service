@@ -9,7 +9,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 def get_db():
     try:
-        log.info(f"DYNAMODB_URL:{DYNAMODB_URL}")
+        log.info(f'DYNAMODB_URL:{DYNAMODB_URL}')
         if DYNAMODB_URL == LOCAL_DB:
             dynamodb = boto3.resource('dynamodb', endpoint_url=DYNAMODB_URL)
         else:
@@ -46,8 +46,8 @@ def client_err_msg(e: ClientError):
 
 
 def response_success(res):
-    if res["ResponseMetadata"] != None and res["ResponseMetadata"]["HTTPStatusCode"] != None:
-        return res["ResponseMetadata"]["HTTPStatusCode"] == 200
+    if res['ResponseMetadata'] != None and res['ResponseMetadata']['HTTPStatusCode'] != None:
+        return res['ResponseMetadata']['HTTPStatusCode'] == 200
 
     log.error(res)
     return False

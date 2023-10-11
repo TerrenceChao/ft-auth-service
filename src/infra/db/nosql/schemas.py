@@ -39,7 +39,7 @@ class Account(BaseModel):
 # request
 class FTUser(BaseModel):
     email: EmailStr
-    # user's { "region/current_region", "role", pass } 透過 pubkey 編碼取得，可解密
+    # user's { 'region/current_region', 'role', pass } 透過 pubkey 編碼取得，可解密
     meta: Optional[str] = None
     pubkey: Optional[str] = None
     confirm_code: Optional[str] = None

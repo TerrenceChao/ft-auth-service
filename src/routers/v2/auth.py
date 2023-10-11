@@ -35,9 +35,9 @@ auth_service = AuthService(
 )
 
 router = APIRouter(
-    prefix="/auth-nosql",
-    tags=["auth"],
-    responses={404: {"description": "Not found"}},
+    prefix='/auth-nosql',
+    tags=['auth'],
+    responses={404: {'description': 'Not found'}},
 )
 
 

@@ -10,5 +10,5 @@ class Email:
         pass
 
     async def send_conform_code(self, email: str, confirm_code: str) -> None:
-        log.debug(f"send email: {email}, code: {confirm_code}")
+        log.debug(f'send email: {email}, code: {confirm_code}')
         pass

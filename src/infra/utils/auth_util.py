@@ -14,12 +14,12 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 # TODO: asymmetric encrypt/decrypt
 def get_public_key(ts):
-    return "abcdefghijkl"
+    return 'abcdefghijkl'
 
 
 
-"""SnowflakeGenerator group
-"""
+'''SnowflakeGenerator group
+'''
 instances = 100
 snowflake_generator_dict = {}
 for i in range(instances):
@@ -49,7 +49,7 @@ def gen_pass_salt():
     return gen_random_string(12)
 
 def gen_password_hash(pw: str, pass_salt: str):
-    password_data = str(pw + pass_salt).encode("utf-8")
+    password_data = str(pw + pass_salt).encode('utf-8')
     return hashlib.sha224(password_data).hexdigest()
 
 
@@ -57,26 +57,26 @@ def gen_account_data(data: dict, account_type: str):
     aid = gen_snowflake_id()
     role_id = gen_snowflake_id()
     pass_salt = gen_pass_salt()
-    pass_hash = gen_password_hash(pw=data["pass"], pass_salt=pass_salt)
+    pass_hash = gen_password_hash(pw=data['pass'], pass_salt=pass_salt)
     created_at = int(shift_decimal(time.time(), 3))
 
     return {
         # auth
-        "email": data["email"],
-        "aid": aid,
-        "pass_hash": pass_hash,
-        "pass_salt": pass_salt,
+        'email': data['email'],
+        'aid': aid,
+        'pass_hash': pass_hash,
+        'pass_salt': pass_salt,
 
         # account
-        # "aid": ..
-        "type": account_type,
-        "region": data["region"],
-        # "email": ..
-        "email2": None,
-        "is_active": True,
-        "role": data["role"],
-        "role_id": role_id,
-        "created_at": created_at,
+        # 'aid': ..
+        'type': account_type,
+        'region': data['region'],
+        # 'email': ..
+        'email2': None,
+        'is_active': True,
+        'role': data['role'],
+        'role_id': role_id,
+        'created_at': created_at,
     }
 
 

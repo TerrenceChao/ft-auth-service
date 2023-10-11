@@ -33,18 +33,18 @@ def decrypt_meta(
 ):
     try:
         meta_json = json.loads(meta)
-        if "role" in meta_json and not meta_json["role"] in VALID_ROLES:
-            raise ClientException(msg=f"role allowed only in {VALID_ROLES}")
+        if 'role' in meta_json and not meta_json['role'] in VALID_ROLES:
+            raise ClientException(msg=f'role allowed only in {VALID_ROLES}')
         
-        if not meta_json["region"] in REGION_CODES:
-            raise ClientException(msg=f"region allowed only in {REGION_CODES}")
+        if not meta_json['region'] in REGION_CODES:
+            raise ClientException(msg=f'region allowed only in {REGION_CODES}')
 
         return meta_json
 
     except json.JSONDecodeError as e:
         log.error(
-            f"func: decrypt_meta error [json_decode_error] meta:%s, err:%s", meta, e.__str__())
-        raise ClientException(msg=f"invalid json format, meta:{meta}")
+            f'func: decrypt_meta error [json_decode_error] meta:%s, err:%s', meta, e.__str__())
+        raise ClientException(msg=f'invalid json format, meta:{meta}')
 
     except ClientException as e:
         raise ClientException(msg=e.msg)

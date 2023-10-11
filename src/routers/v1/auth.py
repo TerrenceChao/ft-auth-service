@@ -28,27 +28,27 @@ auth_service = AuthService(
 )
 
 router = APIRouter(
-    prefix="/auth-nosql",
-    tags=["auth"],
-    responses={404: {"description": "Not found"}},
+    prefix='/auth-nosql',
+    tags=['auth'],
+    responses={404: {'description': 'Not found'}},
 )
 
 
-@router.get("/security/pubkey")
+@router.get('/security/pubkey')
 def get_pubkey(ts: int):
     pubkey = get_public_key(ts=ts)
     return res_success(data=pubkey)
 
 
-"""send_conform_code
+'''send_conform_code
 
 sendby: 
-  "no_exist", # email 不存在時寄送
-  "registered", # email 已註冊時寄送
-"""
+  'no_exist', # email 不存在時寄送
+  'registered', # email 已註冊時寄送
+'''
 
 
-@router.post("/sendcode/email")
+@router.post('/sendcode/email')
 async def send_conform_code_by_email(
     email: EmailStr = Body(...),
     confirm_code: str = Body(...),
@@ -67,7 +67,7 @@ async def send_conform_code_by_email(
     return res_success(data=res)
 
 
-@router.post("/signup")
+@router.post('/signup')
 def signup(
     email: EmailStr = Body(...),
     # meta ex: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
@@ -85,7 +85,7 @@ def signup(
     return res_success(data=res)
 
 
-@router.post("/login")
+@router.post('/login')
 def login(
     email: EmailStr = Body(...),
     # ex: "{\"region\":\"jp\",\"pass\":\"secret\"}"
