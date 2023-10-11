@@ -166,7 +166,7 @@ class AuthService:
             if origin_pw:
                 account_data = self.auth_repo.find_auth(db=db, email=email)
                 if account_data is None:
-                    raise NotFoundException(msg="account_not_found")
+                    raise NotFoundException(msg="user_not_found")
                 
                 if not auth_util.match_password(
                     pass_hash=account_data['pass_hash'], pw=origin_pw, pass_salt=account_data['pass_salt']

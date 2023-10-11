@@ -33,7 +33,7 @@ def decrypt_meta(
 ):
     try:
         meta_json = json.loads(meta)
-        if not meta_json["role"] in VALID_ROLES:
+        if "role" in meta_json and not meta_json["role"] in VALID_ROLES:
             raise ClientException(msg=f"role allowed only in {VALID_ROLES}")
         
         if not meta_json["region"] in REGION_CODES:
