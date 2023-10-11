@@ -25,19 +25,48 @@ class ResetPasswordPayload(BaseModel):
 
 REGION_CODES = set(REGION_MAPPING.values())
 
-def decrypt_meta(
+def decrypt_meta_for_signup(
     # signup -> meta: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
-    # login  -> meta: "{\"region\":\"jp\",\"pass\":\"secret\"}"
     meta: str = Body(...),
     pubkey: str = Body(...)
 ):
     try:
         meta_json = json.loads(meta)
-        if 'role' in meta_json and not meta_json['role'] in VALID_ROLES:
+        if not 'role' in meta_json:
+            raise ClientException(msg=f'role is required')
+        
+        if not meta_json['role'] in VALID_ROLES:
             raise ClientException(msg=f'role allowed only in {VALID_ROLES}')
+        
+        if not 'region' in meta_json:
+            raise ClientException(msg=f'region is required')
         
         if not meta_json['region'] in REGION_CODES:
             raise ClientException(msg=f'region allowed only in {REGION_CODES}')
+        
+        if not 'pass' in meta_json:
+            raise ClientException(msg=f'pass is required')
+
+        return meta_json
+
+    except json.JSONDecodeError as e:
+        log.error(
+            f'func: decrypt_meta_for_signup error [json_decode_error] meta:%s, err:%s', meta, e.__str__())
+        raise ClientException(msg=f'invalid json format, meta:{meta}')
+
+    except ClientException as e:
+        raise ClientException(msg=e.msg)
+    
+    
+def decrypt_meta(
+    # meta: "{\"pass\":\"secret\"}"
+    meta: str = Body(...),
+    pubkey: str = Body(...)
+):
+    try:
+        meta_json = json.loads(meta)
+        if not 'pass' in meta_json:
+            raise ClientException(msg=f'pass is required')
 
         return meta_json
 

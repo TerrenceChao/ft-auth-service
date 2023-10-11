@@ -5,7 +5,7 @@ from fastapi import APIRouter, \
     File, UploadFile, status, \
     HTTPException
 from pydantic import EmailStr
-from ..req.auth_validation import decrypt_meta, ResetPasswordPayload
+from ..req.auth_validation import decrypt_meta_for_signup, decrypt_meta, ResetPasswordPayload
 from ..res.response import res_success, res_err
 from ...services.auth_service import AuthService
 from ...configs.database import get_db, get_client
@@ -71,7 +71,7 @@ async def send_conform_code_by_email(
 def signup(
     email: EmailStr = Body(...),
     # meta ex: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
-    data: Dict = Depends(decrypt_meta),
+    data: Dict = Depends(decrypt_meta_for_signup),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
 ):
@@ -88,7 +88,7 @@ def signup(
 @router.post('/login')
 def login(
     email: EmailStr = Body(...),
-    # meta ex: "{\"region\":\"jp\",\"pass\":\"secret\"}"
+    # meta ex: "{\"pass\":\"secret\"}"
     data: Dict = Depends(decrypt_meta),
     current_region: str = Body(...),
     auth_db: Any = Depends(get_db),
