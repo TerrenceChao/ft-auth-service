@@ -13,6 +13,7 @@ from ...infra.utils.auth_util import get_public_key, decrypt_meta
 from ...infra.db.nosql.auth_repository import AuthRepository
 from ...infra.storage.global_object_storage import GlobalObjectStorage
 from ...infra.apis.email import send_conform_code
+from ..schemas.auth import ResetPasswordPayload
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -54,15 +55,13 @@ async def send_conform_code_by_email(
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db)
 ):
-    res, err = await auth_service.send_conform_code_by_email(
+    res = await auth_service.send_conform_code_by_email(
         email=email,
         confirm_code=confirm_code,
         sendby=sendby,
         auth_db=auth_db,
         account_db=account_db
     )
-    if err:
-        return res_err(data=res, msg=err)
 
     return res_success(data=res)
 
@@ -77,14 +76,12 @@ def signup(
     account_db: Any = Depends(get_db),
 ):
     data = decrypt_meta(meta=meta, pubkey=pubkey)
-    res, err = auth_service.signup(
+    res = auth_service.signup(
         email=email,
         data=data,
         auth_db=auth_db,
         account_db=account_db,
     )
-    if err:
-        return res_err(data=res, msg=err)
 
     return res_success(data=res)
 
@@ -99,14 +96,12 @@ def login(
     account_db: Any = Depends(get_db),
 ):
     data = decrypt_meta(meta=meta, pubkey=pubkey)
-    res, err = auth_service.login(
+    res = auth_service.login(
         email=email,
         data=data,
         current_region=current_region,
         auth_db=auth_db,
         account_db=account_db,
     )
-    if err:
-        return res_err(data=res, msg=err)
-
+    
     return res_success(data=res)
