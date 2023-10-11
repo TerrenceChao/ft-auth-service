@@ -55,7 +55,7 @@ class GlobalObjectStorage:
             log.error(f'{self.__cls_name}.update [no version found] \
                 bucket:%s, version:%s, newdata:%s, data:%s, result:%s, key:%s, err:%s', 
                 bucket, version, newdata, data, result, key, e.__str__())
-            raise NotFoundException(msg=e.__str__())
+            raise NotFoundException(msg=e.msg)
 
         except Exception as e:
             log.error(f'{self.__cls_name}.update [update file error] \

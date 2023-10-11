@@ -41,7 +41,7 @@ class AuthService:
             log.error(f'{self.__cls_name}.send_conform_code_by_email [lack with account_data] \
                 email:%s, confirm_code:%s, sendby:%s, res:%s, err:%s',
                 email, confirm_code, sendby, res, e.__str__())
-            raise NotFoundException(msg=e.__str__())
+            raise NotFoundException(msg='incomplete_user_information')
                       
 
         sendby = str(sendby).lower()
@@ -85,16 +85,16 @@ class AuthService:
             return self.__save_account_data(email, account_data, auth_db, account_db)
         
         except ClientException as e:
-            raise ClientException(msg=e.msg)
+            raise ClientException(msg=e.msg, data=e.data)
         
         except NotAcceptableException as e:
-            raise NotAcceptableException(msg=e.msg)
+            raise NotAcceptableException(msg=e.msg, data=e.data)
         
         except DuplicateUserException as e:
-            raise DuplicateUserException(msg=e.msg)
+            raise DuplicateUserException(msg=e.msg, data=e.data)
         
         except ServerException as e:
-            raise ServerException(msg=e.msg)
+            raise ServerException(msg=e.msg, data=e.data)
         
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [unknown_err] \
@@ -128,22 +128,23 @@ class AuthService:
             return self.__find_account(aid, account_db)
         
         except ClientException as e:
-            raise ClientException(msg=e.msg)
+            raise ClientException(msg=e.msg, data=e.data)
         
         except UnauthorizedException as e:
-            raise UnauthorizedException(msg=e.msg)
+            raise UnauthorizedException(msg=e.msg, data=e.data)
         
         except ForbiddenException as e:
-            raise ForbiddenException(msg=e.msg)
+            # important! 'region' in S3 needs to be returned
+            raise ForbiddenException(msg=e.msg, data=e.data)
         
         except NotFoundException as e:
-            raise NotFoundException(msg=e.msg)
+            raise NotFoundException(msg=e.msg, data=e.data)
         
         except NotAcceptableException as e:
-            raise NotAcceptableException(msg=e.msg)
+            raise NotAcceptableException(msg=e.msg, data=e.data)
         
         except ServerException as e:
-            raise ServerException(msg=e.msg)
+            raise ServerException(msg=e.msg, data=e.data)
         
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [unknown_err] \
