@@ -88,7 +88,7 @@ def signup(
 @router.post('/login')
 def login(
     email: EmailStr = Body(...),
-    # ex: "{\"region\":\"jp\",\"pass\":\"secret\"}"
+    # meta ex: "{\"region\":\"jp\",\"pass\":\"secret\"}"
     data: Dict = Depends(decrypt_meta),
     current_region: str = Body(...),
     auth_db: Any = Depends(get_db),
