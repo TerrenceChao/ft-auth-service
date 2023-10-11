@@ -20,16 +20,18 @@ from ...configs.s3 import get_s3_resource
 from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
 from ...infra.storage.global_object_storage import GlobalObjectStorage
-from ...infra.apis.email import send_conform_code
+from ...infra.apis.email import Email
 import logging as log
 
+log.basicConfig(filemode='w', level=log.INFO)
 
 auth_repo = AuthRepository()
 global_object_storage = GlobalObjectStorage(s3=get_s3_resource())
+email = Email()
 auth_service = AuthService(
     auth_repo=auth_repo,
     obj_storage=global_object_storage,
-    send_conform_code=send_conform_code,
+    email=email,
 )
 
 router = APIRouter(

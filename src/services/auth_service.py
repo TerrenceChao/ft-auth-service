@@ -6,6 +6,7 @@ import hashlib
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..infra.utils import auth_util
+from ..infra.apis.email import Email
 from ..configs.exceptions import *
 import logging as log
 
@@ -13,10 +14,10 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class AuthService:
-    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, send_conform_code: Callable[[str, str], None]):
+    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email):
         self.auth_repo = auth_repo
         self.obj_storage = obj_storage
-        self.send_conform_code = send_conform_code
+        self.email = email
         self.__cls_name = self.__class__.__name__
 
 
@@ -46,13 +47,13 @@ class AuthService:
         sendby = str(sendby).lower()
         if res is None:
             if sendby == "no_exist":
-                await self.send_conform_code(email=email, confirm_code=confirm_code)
+                await self.email.send_conform_code(email=email, confirm_code=confirm_code)
                 return "email_sent"
             raise NotFoundException(msg="email_not_found")
 
         else:
             if sendby == "registered":
-                await self.send_conform_code(email=email, confirm_code=confirm_code)
+                await self.email.send_conform_code(email=email, confirm_code=confirm_code)
                 return "email_sent"
             raise DuplicateUserException(msg="email_registered")
 
