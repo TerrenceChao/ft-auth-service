@@ -249,7 +249,7 @@ class AuthRepository(IAuthRepository):
 
 
     def find_auth(self, db: Any, email: EmailStr):
-        err_msg: str = None
+        res = None
         result = None
 
         try:
@@ -257,26 +257,32 @@ class AuthRepository(IAuthRepository):
             table = db.Table(TABLE_AUTH)
             log.info(table)
             res = table.get_item(Key={'email': email})
-
-            result = res['Item']
+            if 'Item' in res:
+                result = res["Item"]
+            
+            return result
 
         except ClientError as e:
-            err_msg = client_err_msg(e)
+            err = client_err_msg(e)
+            log.error(f'{self.__cls_name}.find_auth error [read_req_error], \
+                email:%s res:%s, err:%s', email, res, err)
+            raise Exception('read_req_error')
 
         except Exception as e:
-            err_msg = e.__str__()
+            err = e.__str__()
+            log.error(f'{self.__cls_name}.find_auth error [db_read_error], \
+                email:%s res:%s, err:%s', email, res, err)
+            raise Exception('db_read_error')
 
-        return result, err_msg
 
     def update_password(
         self, db: Any, update_password_params: UpdatePasswordParams
-    ) -> Optional[str]:
-        err_msg: Optional[str] = None
-
+    ) -> (bool):
+        res = None
         try:
             auth_table = db.Table(TABLE_AUTH)
 
-            auth_table.update_item(
+            res = auth_table.update_item(
                 Key={'email': update_password_params.email},
                 UpdateExpression='set pass_salt=:ps, pass_hash=:ph',
                 ExpressionAttributeValues={
@@ -285,10 +291,20 @@ class AuthRepository(IAuthRepository):
                 },
                 ReturnValues='UPDATED_NEW',
             )
+            if 'Attributes' in res:
+                return True
+            else:
+                raise Exception('update_password_fail')
+    
         except ClientError as e:
-            err_msg = client_err_msg(e)
+            err = client_err_msg(e)
+            log.error(f'{self.__cls_name}.update_password error [update_req_error], \
+                update_password_params:%s, res:%s, err:%s', update_password_params, res, err)
+            raise Exception('update_req_error')
 
         except Exception as e:
-            err_msg = e.__str__()
+            err = e.__str__()
+            log.error(f'{self.__cls_name}.update_password error [update_password_fail], \
+                update_password_params:%s, res:%s, err:%s', update_password_params, res, err)
+            raise Exception('update_password_fail')
 
-        return err_msg

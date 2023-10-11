@@ -44,9 +44,5 @@ def update_password(
     payload: ResetPasswordPayload,
     auth_db: Any = Depends(get_db),
 ):
-    err = auth_service.update_password(auth_db, payload.register_email, payload.password1, payload.origin_password)
-    if err != None:
-        log.error(f"/update_password fail, err:{err}")
-        return res_err(msg=err)
-
+    auth_service.update_password(auth_db, payload.register_email, payload.password1, payload.origin_password)
     return res_success(msg='password modified')

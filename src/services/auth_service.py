@@ -153,23 +153,38 @@ class AuthService:
 
     def update_password(
         self, db: Any, email: EmailStr, new_pw: str, origin_pw: Optional[str] = None
-    ) -> Optional[str]:
-        pass_salt = auth_util.gen_pass_salt()
-        params = UpdatePasswordParams(
-            email=email,
-            pass_salt=pass_salt,
-            pass_hash=auth_util.gen_password_hash(new_pw, pass_salt),
-        )
-        if origin_pw:
-            account_data, err = self.auth_repo.find_auth(db=db, email=email)
-            if err is not None:
-                return err
-            if not auth_util.match_password(
-                pass_hash=account_data['pass_hash'], pw=origin_pw, pass_salt=account_data['pass_salt']
-            ):
-                return "Invalid Password"
+    ) -> (bool):
+        try:
+            pass_salt = auth_util.gen_pass_salt()
+            params = UpdatePasswordParams(
+                email=email,
+                pass_salt=pass_salt,
+                pass_hash=auth_util.gen_password_hash(new_pw, pass_salt),
+            )
+            
+            if origin_pw:
+                account_data = self.auth_repo.find_auth(db=db, email=email)
+                if account_data is None:
+                    raise NotFoundException(msg="account_not_found")
+                
+                if not auth_util.match_password(
+                    pass_hash=account_data['pass_hash'], pw=origin_pw, pass_salt=account_data['pass_salt']
+                ):
+                    raise ForbiddenException(msg="Invalid Password") 
 
-        return self.auth_repo.update_password(db=db, update_password_params=params)
+            return self.auth_repo.update_password(db=db, update_password_params=params)
+        
+        except NotFoundException as e:
+            raise NotFoundException(msg=e.msg)
+        
+        except ForbiddenException as e:
+            raise ForbiddenException(msg=e.msg)
+        
+        except Exception as e:
+            log.error(f'{self.__cls_name}.update_password [unknown_err] \
+                params:%s, err:%s', params, e.__str__())
+            raise ServerException(msg="unknown_err")
+
 
 
     """
