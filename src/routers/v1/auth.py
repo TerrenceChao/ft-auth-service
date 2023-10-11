@@ -5,7 +5,7 @@ from fastapi import APIRouter, \
     File, UploadFile, status, \
     HTTPException
 from pydantic import EmailStr
-from ..req.auth_validation import decrypt_meta
+from ..req.auth_validation import decrypt_meta, ResetPasswordPayload
 from ..res.response import res_success, res_err
 from ...services.auth_service import AuthService
 from ...configs.database import get_db, get_client
@@ -103,3 +103,22 @@ def login(
     )
 
     return res_success(data=res)
+
+
+@router.post('/password/update')
+def update_password(
+    payload: ResetPasswordPayload,
+    auth_db: Any = Depends(get_db),
+):
+    auth_service.update_password(
+        auth_db, payload.register_email, payload.password1, payload.origin_password)
+    return res_success(msg='password modified')
+
+
+@router.post('/password/reset')
+def reset_password(
+    payload: ResetPasswordPayload,
+    auth_db: Any = Depends(get_db),
+):
+    # TODO: reset password
+    pass

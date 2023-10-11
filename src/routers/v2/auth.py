@@ -1,10 +1,3 @@
-# TODO: 在這裡 (src/routers/v2/auth.py) 新增 routers 做 API:
-# [1]. Update password
-# [2]. Close/disable account
-# [3]. Forgot password
-#
-# 用一般的三層式寫法: routers -> service -> repository
-# 參考 src/routers/v1/auth.py, src/services/auth_service.py, src/db/nosql/auth_repository.py
 from typing import Any
 from fastapi import APIRouter, \
     Request, Depends, \
@@ -12,7 +5,6 @@ from fastapi import APIRouter, \
     File, UploadFile, status, \
     HTTPException
 from pydantic import EmailStr
-from ..req.auth_validation import ResetPasswordPayload
 from ..res.response import res_success, res_err
 from ...services.auth_service import AuthService
 from ...configs.database import get_db, get_client
@@ -39,12 +31,3 @@ router = APIRouter(
     tags=['auth'],
     responses={404: {'description': 'Not found'}},
 )
-
-
-@router.post('/update_password')
-def update_password(
-    payload: ResetPasswordPayload,
-    auth_db: Any = Depends(get_db),
-):
-    auth_service.update_password(auth_db, payload.register_email, payload.password1, payload.origin_password)
-    return res_success(msg='password modified')

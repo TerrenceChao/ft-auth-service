@@ -16,10 +16,6 @@ from src.configs import exceptions
 from src.routers.v1 import auth
 from src.routers.v2 import auth as auth_v2
 
-# TODO: 在 src/routers/v2/auth.py 新增 routers 做 API:
-# [1]. Update password
-# [2]. Close/disable account
-# [3]. Forgot password
 
 router_v1 = APIRouter(prefix='/auth/api/v1')
 router_v1.include_router(auth.router)
