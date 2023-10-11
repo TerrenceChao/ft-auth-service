@@ -37,7 +37,7 @@ def decrypt_meta(
             raise ClientException(msg=f'role allowed only in {VALID_ROLES}')
         
         if not meta_json['region'] in REGION_CODES:
-            raise ClientException(msg=f'region allowed only in {REGION_CODES}')
+            raise ClientException(msg=f'region is not allowed')
 
         return meta_json
 
