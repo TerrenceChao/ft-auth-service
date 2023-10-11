@@ -154,7 +154,7 @@ class AuthService:
     def update_password(
         self, db: Any, email: EmailStr, new_pw: str, origin_pw: Optional[str] = None
     ) -> Optional[str]:
-        pass_salt = auth_util.gen_random_string(12)
+        pass_salt = auth_util.gen_pass_salt()
         params = UpdatePasswordParams(
             email=email,
             pass_salt=pass_salt,

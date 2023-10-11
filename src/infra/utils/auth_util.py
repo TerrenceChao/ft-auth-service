@@ -45,6 +45,8 @@ def gen_random_string(length):
 def shift_decimal(number, places):
     return number * (10 ** places)
 
+def gen_pass_salt():
+    return gen_random_string(12)
 
 def gen_password_hash(pw: str, pass_salt: str):
     password_data = str(pw + pass_salt).encode("utf-8")
@@ -54,7 +56,7 @@ def gen_password_hash(pw: str, pass_salt: str):
 def gen_account_data(data: dict, account_type: str):
     aid = gen_snowflake_id()
     role_id = gen_snowflake_id()
-    pass_salt = gen_random_string(12)
+    pass_salt = gen_pass_salt()
     pass_hash = gen_password_hash(pw=data["pass"], pass_salt=pass_salt)
     created_at = int(shift_decimal(time.time(), 3))
 
