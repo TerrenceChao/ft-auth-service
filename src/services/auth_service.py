@@ -1,6 +1,9 @@
-from typing import Any, Union, Callable
+from typing import Any, Union, Callable, Optional
 from pydantic import EmailStr
-from ..repositories.auth_repository import IAuthRepository
+from decimal import Decimal
+import hashlib
+
+from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..infra.utils import auth_util
 from ..configs.exceptions import *
@@ -146,6 +149,29 @@ class AuthService:
                 email:%s, data:%s, err:%s",
                 email, data, e.__str__())
             raise ServerException(msg="unknown_err")
+    
+
+    def update_password(
+        self, db: Any, aid: Decimal, new_pw: str, origin_pw: Optional[str] = None
+    ) -> Optional[str]:
+        pass_salt = auth_util.gen_random_string(12)
+        password_data = str(new_pw + pass_salt).encode("utf-8")
+        params = UpdatePasswordParams(
+            aid=aid,
+            pass_salt=pass_salt,
+            pass_hash=hashlib.sha224(password_data).hexdigest(),
+        )
+        if origin_pw:
+            account_data, err = self.auth_repo.find_auth(db=db, aid=aid)
+            if err is not None:
+                return err
+            if not auth_util.match_password(
+                pass_hash=account_data['pass_hash'], pw=origin_pw, pass_salt=account_data['pass_salt']
+            ):
+                return "Invalid Passwrod"
+
+        return self.auth_repo.update_password(db=db, update_password_params=params)
+
 
     """
     檢查 email 有沒註冊過

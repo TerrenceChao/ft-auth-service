@@ -13,6 +13,7 @@ from ...infra.utils.auth_util import get_public_key, decrypt_meta
 from ...infra.db.nosql.auth_repository import AuthRepository
 from ...infra.storage.global_object_storage import GlobalObjectStorage
 from ...infra.apis.email import send_conform_code
+from ..schemas.auth import ResetPasswordPayload
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)

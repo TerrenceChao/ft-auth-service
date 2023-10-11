@@ -14,6 +14,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from src.configs import exceptions
 from src.routers.v1 import auth
+from src.routers.v2 import auth as auth_v2
 
 # TODO: 在 src/routers/v2/auth.py 新增 routers 做 API:
 # [1]. Update password
@@ -23,6 +24,8 @@ from src.routers.v1 import auth
 router_v1 = APIRouter(prefix="/auth/api/v1")
 router_v1.include_router(auth.router)
 
+router_v2 = APIRouter(prefix='/auth/api/v2')
+router_v2.include_router(auth_v2.router)
 
 STAGE = os.environ.get('STAGE')
 root_path = '/' if not STAGE else f'/{STAGE}'
@@ -30,6 +33,8 @@ app = FastAPI(title="ForeignTeacher: Auth Service", root_path=root_path)
 exceptions.include_app(app)
 
 app.include_router(router_v1)
+app.include_router(router_v2)
+
 
 class BusinessEception(Exception):
     def __init__(self, term: str):

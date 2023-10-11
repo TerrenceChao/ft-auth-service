@@ -1,8 +1,9 @@
 import os
 import json
-from typing import Dict, List, Any, Optional
+
+from typing import Dict, List, Any, Optional, Tuple
 from decimal import Decimal
-from pydantic import EmailStr
+from pydantic import EmailStr, BaseModel
 import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
@@ -10,8 +11,9 @@ from botocore.exceptions import ClientError
 from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
 from ....configs.database import client_err_msg, response_success
 from ....configs.exceptions import *
-from ....repositories.auth_repository import IAuthRepository
+from ....repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 import logging as log
+from src.infra.utils import auth_util 
 
 log.basicConfig(filemode='w', level=log.INFO)
 
@@ -244,3 +246,49 @@ class AuthRepository(IAuthRepository):
             log.error(f'{self.__cls_name}.find_account error [db_read_error], \
                 aid:%s res:%s, err:%s', aid, res, err)
             raise Exception('db_read_error')
+
+
+    def find_auth(self, db: Any, aid: Decimal):
+        err_msg: str = None
+        result = None
+
+        try:
+            # 1. find auth by aid
+            table = db.Table(TABLE_AUTH)
+            log.info(table)
+            res = table.get_item(Key={'aid': int(aid)})
+
+            result = res['Item']
+
+        except ClientError as e:
+            err_msg = client_err_msg(e)
+
+        except Exception as e:
+            err_msg = e.__str__()
+
+        return result, err_msg
+
+    def update_password(
+        self, db: Any, update_password_params: UpdatePasswordParams
+    ) -> Optional[str]:
+        err_msg: Optional[str] = None
+
+        try:
+            auth_table = db.Table(TABLE_AUTH)
+
+            auth_table.update_item(
+                Key={'aid': update_password_params.aid},
+                UpdateExpression='set pass_salt=:ps, pass_hash=:ph',
+                ExpressionAttributeValues={
+                    ':ps': update_password_params.pass_salt,
+                    ':ph': update_password_params.pass_hash,
+                },
+                ReturnValues='UPDATED_NEW',
+            )
+        except ClientError as e:
+            err_msg = client_err_msg(e)
+
+        except Exception as e:
+            err_msg = e.__str__()
+
+        return err_msg
