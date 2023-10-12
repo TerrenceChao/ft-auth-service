@@ -24,10 +24,6 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    def get_auth_by_email(self, db: Any, email: EmailStr):
-        pass
-
-    @abstractmethod
     def find_account(self, db: Any, aid: Decimal):
         pass
 

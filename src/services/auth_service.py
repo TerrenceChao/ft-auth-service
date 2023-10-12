@@ -41,7 +41,7 @@ class AuthService:
             log.error(f'{self.__cls_name}.send_conform_code_by_email [lack with account_data] \
                 email:%s, confirm_code:%s, sendby:%s, res:%s, err:%s',
                 email, confirm_code, sendby, res, e.__str__())
-            raise NotFoundException(msg='incomplete_user_information')
+            raise NotFoundException(msg='incomplete_registered_user_information')
                       
 
         sendby = str(sendby).lower()
@@ -284,7 +284,7 @@ class AuthService:
         auth_db: Any,
     ):
         # 1. 從 DynamoDB (auth) 取得 auth
-        auth = self.auth_repo.get_auth_by_email(db=auth_db, email=email)
+        auth = self.auth_repo.find_auth(db=auth_db, email=email)
         
         # 2. not found 錯誤處理
         if auth is None:
