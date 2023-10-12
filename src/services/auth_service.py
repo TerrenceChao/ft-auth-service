@@ -228,7 +228,7 @@ class AuthService:
     '''
     將帳戶資料寫入 DB
         1. 將帳戶資料寫入 DynamoDB
-            res = { aid, region, email, email2, is_active, role, role_id } = account_data
+            res = { aid, region, email, email2, is_active, role, role_id } = account
         2. 錯誤處理..
             a. 先嘗試刪除 DynamoDB
             b. 再嘗試刪除 S3

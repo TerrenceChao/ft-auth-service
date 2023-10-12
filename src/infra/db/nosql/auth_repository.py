@@ -112,33 +112,6 @@ class AuthRepository(IAuthRepository):
                 return account_dict
             
             raise Exception('insert_req_error')
-            
-            # # 1. create auth
-            # auth_table = auth_db.Table(TABLE_AUTH)
-            # # log.info(auth_table)
-            # auth_res = auth_table.put_item(
-            #     Item=auth.create_ts().dict(),
-            #     ConditionExpression='attribute_not_exists(email) AND attribute_not_exists(aid)'
-            # )
-            # # 1. fail -> return
-            # if not response_success(auth_res):
-            #     raise Exception('insert_auth_fail')
-
-            # # 2. create account
-            # acc_table = account_db.Table(TABLE_ACCOUNT)
-            # # log.info(acc_table)
-            # acc_res = acc_table.put_item(
-            #     Item=account.create_ts().dict(),
-            #     ConditionExpression='attribute_not_exists(aid) AND attribute_not_exists(email)'
-            # )
-
-            # if not response_success(acc_res):
-            #     raise Exception('insert_account_fail')
-
-            # account_item = acc_table.get_item(Key={'aid': account.aid})
-            # account = account_item['Item']
-            
-            # return account
 
         except ClientError as e:
             log.error(f'{self.__cls_name}.create_account error [insert_req_error], \
@@ -188,23 +161,6 @@ class AuthRepository(IAuthRepository):
                 deleted = True
                 
             return deleted
-
-            # # 2. delete auth by email
-            # auth_del_res = auth_table.delete_item(Key={'email': email})
-            # if not response_success(auth_del_res):
-            #     raise Exception('delete_auth_fail')
-
-            # # 3. delete account by aid
-            # aid = auth_res['Item']['aid']
-            # acc_table = account_db.Table(TABLE_ACCOUNT)
-            # # log.info(acc_table)
-            # acc_del_res = acc_table.delete_item(Key={'aid': aid})
-            # if not response_success(acc_del_res):
-            #     raise Exception('delete_account_fail')
-
-            # delete both auth & account
-            # deleted = True
-            # return deleted
 
         except ClientError as e:
             log.error(f'{self.__cls_name}.delete_account_by_email error [delete_req_error], \
