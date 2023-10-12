@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 from typing import Dict, List, Any, Optional
 from pydantic import EmailStr, BaseModel
+from ..infra.db.nosql.schemas import *
 
 class UpdatePasswordParams(BaseModel):
     pass_hash: str
@@ -16,7 +17,7 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    def create_account(self, auth_db: Any, account_db: Any, email: EmailStr, data: Any):
+    def create_account(self, auth_db: Any, account_db: Any, auth: FTAuth, account: Account):
         pass
 
     @abstractmethod

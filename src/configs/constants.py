@@ -19,3 +19,5 @@ REGION_MAPPING = {
 }
 
 VALID_ROLES = set(['company', 'teacher'])
+
+DYNAMODB_KEYWORDS = set(['role', 'region'])

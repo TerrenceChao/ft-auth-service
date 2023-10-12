@@ -5,6 +5,8 @@ import hashlib
 
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
+from ..models.auth_value_objects import AccountVO
+from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.apis.email import Email
 from ..configs.exceptions import *
@@ -75,14 +77,15 @@ class AuthService:
             version = self.__check_if_email_is_registered(email)
 
             # 2. 產生帳戶資料
-            account_data = self.__generate_account_data(
+            auth, account = self.__generate_account_data(
                 email, data, version)
 
             # TODO: [2]. Close/disable account
             # 透過 auth_service.funcntion(...) 判斷是否允許 login/signup; 並且調整註解
 
             # 3. 將帳戶資料寫入 DB
-            return self.__save_account_data(email, account_data, auth_db, account_db)
+            account_vo = self.__save_account_data(auth, account, auth_db, account_db)
+            return account_vo
         
         except ClientException as e:
             raise ClientException(msg=e.msg, data=e.data)
@@ -125,7 +128,8 @@ class AuthService:
 
             # 2. 取得帳戶資料
             aid = auth['aid']
-            return self.__find_account(aid, account_db)
+            account_vo = self.__find_account(aid, account_db)
+            return account_vo
         
         except ClientException as e:
             raise ClientException(msg=e.msg, data=e.data)
@@ -218,8 +222,8 @@ class AuthService:
 
         # 2. 產生 DynamoDB 需要的帳戶資料
         data['email'] = email
-        account_data = auth_util.gen_account_data(data, 'ft')
-        return account_data  # all good!
+        auth, account = auth_util.gen_account_data(data, 'ft')
+        return (auth, account) # all good!
 
     '''
     將帳戶資料寫入 DB
@@ -231,8 +235,8 @@ class AuthService:
     '''
     def __save_account_data(
         self,
-        email: EmailStr,
-        account_data: Any,
+        auth: FTAuth, 
+        account: Account,
         auth_db: Any,
         account_db: Any,
     ):
@@ -240,31 +244,25 @@ class AuthService:
         try:
             # 1. 將帳戶資料寫入 DynamoDB
             res = self.auth_repo.create_account(
-                auth_db=auth_db, account_db=account_db, email=email, data=account_data)
-
-            return {
-                'email': res['email'],
-                'region': res['region'],
-                'role': res['role'],
-                'role_id': res['role_id'],
-                'created_at': res['created_at'],
-            }  # all good!
+                auth_db=auth_db, account_db=account_db, auth=auth, account=account)
+            return AccountVO.parse_obj(res)  # all good!
 
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [db_create_err] \
-                email:%s, account_data:%s, res:%s, err:%s',
-                email, account_data, res, e.__str__())
+                auth:%s, account:%s, res:%s, err:%s',
+                auth, account, res, e.__str__())
             
             # 2. 錯誤處理..
             try:
+                email = auth.email
                 self.auth_repo.delete_account_by_email(
                         auth_db=auth_db, account_db=account_db, email=email)
                 self.obj_storage.delete(bucket=email)
 
             except Exception as e:
-                log.error(f'{self.__cls_name}.signup [rollback_err!!!] \
-                    email:%s, account_data:%s, res:%s, err:%s',
-                    email, account_data, res, e.__str__())
+                log.error(f'{self.__cls_name}.signup [rollback_err] \
+                    auth:%s, account:%s, res:%s, err:%s',
+                    auth, account, res, e.__str__())
                 raise ServerException(msg='rollback_err')
 
             raise ServerException(msg='db_create_err')
@@ -324,9 +322,7 @@ class AuthService:
         if res is None:
             raise NotFoundException(msg='account_not_found')
 
-        res = auth_util.filter_by_keys(
-            res, ['email', 'region', 'role', 'role_id', 'created_at'])
-        return res
+        return AccountVO.parse_obj(res)
 
     # TODO: [2]. Close/disable account
     # 新增一個 funcntion 判斷是否允許 login/signup：
