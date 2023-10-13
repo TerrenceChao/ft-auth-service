@@ -70,7 +70,7 @@ async def send_conform_code_by_email(
 @router.post('/signup')
 def signup(
     email: EmailStr = Body(...),
-    # meta ex: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
+    # meta ex: "{\"role\":\"teacher\",\"pass\":\"secret\"}"
     data: Dict = Depends(decrypt_meta_for_signup),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),

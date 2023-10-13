@@ -4,7 +4,7 @@ from typing import Optional
 from decimal import Decimal
 from pydantic import EmailStr
 from fastapi import Body
-from ...configs.constants import VALID_ROLES, REGION_MAPPING
+from ...configs.constants import VALID_ROLES, HERE_WE_ARE
 from ...configs.exceptions import *
 import logging as log
 
@@ -23,14 +23,14 @@ class ResetPasswordPayload(BaseModel):
             raise ClientException(msg='passwords do not match')
         return v
 
-REGION_CODES = set(REGION_MAPPING.values())
 
 def decrypt_meta_for_signup(
-    # signup -> meta: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
+    # signup -> meta: "{\"role\":\"teacher\",\"pass\":\"secret\"}"
     meta: str = Body(...),
     pubkey: str = Body(...)
 ):
     try:
+        # TODO: need pubkey to decrypt meta
         meta_json = json.loads(meta)
         if not 'role' in meta_json:
             raise ClientException(msg=f'role is required')
@@ -38,14 +38,10 @@ def decrypt_meta_for_signup(
         if not meta_json['role'] in VALID_ROLES:
             raise ClientException(msg=f'role allowed only in {VALID_ROLES}')
         
-        if not 'region' in meta_json:
-            raise ClientException(msg=f'region is required')
-        
-        if not meta_json['region'] in REGION_CODES:
-            raise ClientException(msg=f'region allowed only in {REGION_CODES}')
-        
         if not 'pass' in meta_json:
             raise ClientException(msg=f'pass is required')
+        
+        meta_json['region'] = HERE_WE_ARE
 
         return meta_json
 

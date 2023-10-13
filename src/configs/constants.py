@@ -1,3 +1,4 @@
+from .conf import LOCAL_REGION
 
 REGION_MAPPING = {
     'us-east-1': 'us-e1',
@@ -17,5 +18,7 @@ REGION_MAPPING = {
     'ap-south-1': 'in',
     'sa-east-1': 'br'
 }
+
+HERE_WE_ARE = REGION_MAPPING[LOCAL_REGION]
 
 VALID_ROLES = set(['company', 'teacher'])
