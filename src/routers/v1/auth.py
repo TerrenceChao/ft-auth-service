@@ -115,10 +115,11 @@ def update_password(
     return res_success(msg='password modified')
 
 
-@router.post('/password/reset')
-def reset_password(
-    payload: ResetPasswordPayload,
+@router.get('/password/send_reset_password_confirm_email')
+def send_reset_password_confirm_email(
+    email: EmailStr,
     auth_db: Any = Depends(get_db),
+    account_db: Any = Depends(get_db),
 ):
-    # TODO: reset password
-    pass
+    verify_token = auth_service.send_reset_password_confirm_email(auth_db, account_db, email)
+    return res_success(msg='password modified', data={'token': verify_token})

@@ -2,6 +2,7 @@ from typing import Any, Union, Callable, Optional
 from pydantic import EmailStr
 from decimal import Decimal
 import hashlib
+import uuid
 
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
@@ -186,6 +187,14 @@ class AuthService:
             log.error(f'{self.__cls_name}.update_password [unknown_err] \
                 params:%s, err:%s', params, e.__str__())
             raise ServerException(msg='unknown_err')
+
+    def send_reset_password_confirm_email(self, auth_db: Any, account_db: Any, email: EmailStr) -> str:
+        user = self.auth_repo.get_account_by_email(auth_db=auth_db, account_db=account_db, email=email, fields=['aid'])
+        if not user:
+            raise ServerException(msg='invalid user')
+        token = uuid.uuid1()
+        self.email.send_reset_password_comfirm_email(email=email, token=token)
+        return token
 
 
 
