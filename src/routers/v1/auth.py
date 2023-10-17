@@ -48,7 +48,7 @@ sendby:
 '''
 
 
-@router.post('/sendcode/email')
+@router.post('/sendcode/email', status_code=status.HTTP_201_CREATED)
 async def send_conform_code_by_email(
     email: EmailStr = Body(...),
     confirm_code: str = Body(...),
@@ -67,10 +67,10 @@ async def send_conform_code_by_email(
     return res_success(data=res)
 
 
-@router.post('/signup')
+@router.post('/signup', status_code=status.HTTP_201_CREATED)
 def signup(
     email: EmailStr = Body(...),
-    # meta ex: "{\"region\":\"jp\",\"role\":\"teacher\",\"pass\":\"secret\"}"
+    # meta ex: "{\"role\":\"teacher\",\"pass\":\"secret\"}"
     data: Dict = Depends(decrypt_meta_for_signup),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
@@ -105,7 +105,7 @@ def login(
     return res_success(data=res)
 
 
-@router.post('/password/update')
+@router.put('/password/update')
 def update_password(
     payload: ResetPasswordPayload,
     auth_db: Any = Depends(get_db),

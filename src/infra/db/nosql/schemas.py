@@ -1,8 +1,8 @@
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr
+from .public_schemas import BaseEntity
 
-
-class BaseAuth(BaseModel):
+class BaseAuth(BaseEntity):
     email: EmailStr
     aid: Optional[int] = None
 
@@ -22,8 +22,8 @@ class GoogleAuth(BaseAuth):
     pass
 
 
-class Account(BaseModel):
-    aid: Optional[int] = None
+class Account(BaseEntity):
+    aid: int
     region: str
     email: EmailStr
     email2: Optional[EmailStr] = None
@@ -32,8 +32,8 @@ class Account(BaseModel):
     is_active: bool = True # True: 開啟帳號, False: 關閉帳號
     role: str
     role_id: Optional[int] = None
-    auth: BaseAuth
-    created_at: Optional[int] = None
+
+
 
 
 # request

@@ -1,5 +1,7 @@
 import os
 
+LOCAL_REGION = os.getenv("LOCAL_REGION", "ap-northeast-1")
+
 # cache conf
 TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 60 * 60 * 24 * 30))
 

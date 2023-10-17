@@ -1,3 +1,4 @@
+from .conf import LOCAL_REGION
 
 REGION_MAPPING = {
     'us-east-1': 'us-e1',
@@ -18,4 +19,8 @@ REGION_MAPPING = {
     'sa-east-1': 'br'
 }
 
+HERE_WE_ARE = REGION_MAPPING[LOCAL_REGION]
+
 VALID_ROLES = set(['company', 'teacher'])
+
+DYNAMODB_KEYWORDS = set(['role', 'region'])
