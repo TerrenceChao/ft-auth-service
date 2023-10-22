@@ -45,11 +45,18 @@ class AuthRepository(IAuthRepository):
             
             projection_expression, expression_attr_names = \
                 self.__gen_expression_for_get_items(fields)
-            acc_res = acc_table.get_item(
-                Key={'aid': aid},
-                ProjectionExpression=projection_expression,
-                ExpressionAttributeNames=expression_attr_names,
-            )
+            if expression_attr_names == {}:
+                acc_res = acc_table.get_item(
+                    Key={'aid': aid},
+                    ProjectionExpression=projection_expression,
+                )
+            else:
+                acc_res = acc_table.get_item(
+                    Key={'aid': aid},
+                    ProjectionExpression=projection_expression,
+                    ExpressionAttributeNames=expression_attr_names,
+                )
+
             if not 'Item' in acc_res:
                 raise NotFoundError('there_is_auth_data_but_no_account_data')
                 
