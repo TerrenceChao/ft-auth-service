@@ -115,7 +115,7 @@ def update_password(
     return res_success(msg='password modified')
 
 
-@router.get('/password/send_reset_password_confirm_email')
+@router.get('/password/reset/email')
 def send_reset_password_confirm_email(
     email: EmailStr,
     auth_db: Any = Depends(get_db),
