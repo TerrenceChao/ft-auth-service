@@ -25,6 +25,7 @@ class ResetPasswordPayload(BaseModel):
 
 
 def decrypt_meta_for_signup(
+    email: EmailStr = Body(...),
     # meta: "{\"role\":\"teacher\",\"pass\":\"secret\"}"
     meta: str = Body(...),
     pubkey: str = Body(...)
@@ -47,14 +48,16 @@ def decrypt_meta_for_signup(
 
     except json.JSONDecodeError as e:
         log.error(
-            f'func: decrypt_meta_for_signup error [json_decode_error] meta:%s, err:%s', meta, e.__str__())
-        raise ClientException(msg=f'invalid json format, meta:{meta}')
+            f'func: decrypt_meta_for_signup error [json_decode_error] email:%s, meta:%s, pubkey:%s, err:%s', 
+            email, meta, pubkey, e.__str__())
+        raise ClientException(msg=f'invalid json format of meta')
 
     except ClientException as e:
         raise ClientException(msg=e.msg)
     
     
 def decrypt_meta_for_login(
+    email: EmailStr = Body(...),
     # meta: "{\"pass\":\"secret\"}"
     meta: str = Body(...),
     pubkey: str = Body(...)
@@ -68,8 +71,9 @@ def decrypt_meta_for_login(
 
     except json.JSONDecodeError as e:
         log.error(
-            f'func: decrypt_meta_for_login error [json_decode_error] meta:%s, err:%s', meta, e.__str__())
-        raise ClientException(msg=f'invalid json format, meta:{meta}')
+            f'func: decrypt_meta_for_login error [json_decode_error] email:%s, meta:%s, pubkey:%s, err:%s', 
+            email, meta, pubkey, e.__str__())
+        raise ClientException(msg=f'invalid json format of meta')
 
     except ClientException as e:
         raise ClientException(msg=e.msg)
@@ -93,8 +97,10 @@ def decrypt_meta_for_update_password(
         return ResetPasswordPayload.parse_obj(meta_dict)
     
     except json.JSONDecodeError as e:
-        log.error('func: decrypt_meta_for_update_password error [json_decode_error] meta:%s, err:%s', meta, e.__str__())
-        raise ClientException(msg=f'invalid json format, meta:{meta}')
+        log.error(
+            'func: decrypt_meta_for_update_password error [json_decode_error] register_email:%s, meta:%s, pubkey:%s, err:%s', 
+            register_email, meta, pubkey, e.__str__())
+        raise ClientException(msg=f'invalid json format of meta')
     
     except ClientException as e:
         raise ClientException(msg=e.msg)
