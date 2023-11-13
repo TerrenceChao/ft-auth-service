@@ -5,7 +5,7 @@ from fastapi import APIRouter, \
     File, UploadFile, status, \
     HTTPException
 from pydantic import EmailStr
-from ..req.auth_validation import decrypt_meta_for_signup, decrypt_meta, ResetPasswordPayload
+from ..req.auth_validation import *
 from ..res.response import res_success, res_err
 from ...services.auth_service import AuthService
 from ...configs.database import get_db, get_client
@@ -89,7 +89,7 @@ def signup(
 def login(
     email: EmailStr = Body(...),
     # meta ex: "{\"pass\":\"secret\"}"
-    data: Dict = Depends(decrypt_meta),
+    data: Dict = Depends(decrypt_meta_for_login),
     current_region: str = Body(...),
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
@@ -107,7 +107,7 @@ def login(
 
 @router.put('/password/update')
 def update_password(
-    payload: ResetPasswordPayload,
+    payload: ResetPasswordPayload = Depends(decrypt_meta_for_update_password),
     auth_db: Any = Depends(get_db),
 ):
     auth_service.update_password(
