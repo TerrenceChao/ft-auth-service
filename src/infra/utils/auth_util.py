@@ -14,9 +14,6 @@ import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
-# class SSOAccountData(BaseModel):
-#     regi
-
 # TODO: asymmetric encrypt/decrypt
 def get_public_key(ts):
     return 'abcdefghijkl'

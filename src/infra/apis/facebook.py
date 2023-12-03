@@ -83,8 +83,6 @@ class FBLoginRepository:
         }
         path = f'{FACEBOOK_URL}/dialog/oauth?'
         full_path = parse_url(path, payload)
-        print('='*20)
-        print(full_path)
         resp = RedirectResponse(full_path)
         return resp
 
