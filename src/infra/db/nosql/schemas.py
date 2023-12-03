@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr
 from .public_schemas import BaseEntity
+from src.configs.constants import AccountType
 
 class BaseAuth(BaseEntity):
     email: EmailStr
@@ -10,7 +11,7 @@ class BaseAuth(BaseEntity):
 class FTAuth(BaseAuth):
     pass_hash: Optional[str] = None
     pass_salt: Optional[str] = None
-
+    sso_id: Optional[str] = None
 
 # TODO:
 class FacebookAuth(BaseAuth):
@@ -32,6 +33,7 @@ class Account(BaseEntity):
     is_active: bool = True # True: 開啟帳號, False: 關閉帳號
     role: str
     role_id: Optional[int] = None
+    account_type: AccountType
 
 
 

@@ -96,6 +96,12 @@ class AuthRepository(IAuthRepository):
         auth_dict: Dict = auth.create_ts().dict()
         account_dict: Dict = account.create_ts().dict()
 
+        print(f'auth_dict: \n {auth_dict}')
+        print(f'account_dict: \n {account_dict}')
+
+        print(f'TABLE_AUTH: {TABLE_AUTH}')
+        print(f'TABLE_ACCOUNT: {TABLE_ACCOUNT}')
+
         try:
             response = account_db.meta.client.transact_write_items(
                 TransactItems=[

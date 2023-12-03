@@ -4,6 +4,7 @@ from decimal import Decimal
 import hashlib
 import uuid
 
+from src.configs.constants import AccountType
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
@@ -231,7 +232,7 @@ class AuthService:
 
         # 2. 產生 DynamoDB 需要的帳戶資料
         data['email'] = email
-        auth, account = auth_util.gen_account_data(data, 'ft')
+        auth, account = auth_util.gen_account_data(data, AccountType.FT)
         return (auth, account) # all good!
 
     '''

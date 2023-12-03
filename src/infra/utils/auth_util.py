@@ -2,16 +2,20 @@ import os
 import json
 import random
 import time
+from pydantic import BaseModel
 from datetime import date, datetime
 from typing import List
 from snowflake import SnowflakeGenerator
 import hashlib
+from src.configs.constants import AccountType 
 from ..db.nosql.schemas import FTAuth, Account
 from ...configs.exceptions import *
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
+# class SSOAccountData(BaseModel):
+#     regi
 
 # TODO: asymmetric encrypt/decrypt
 def get_public_key(ts):
@@ -51,28 +55,29 @@ def gen_password_hash(pw: str, pass_salt: str):
     return hashlib.sha224(password_data).hexdigest()
 
 
-def gen_account_data(data: dict, account_type: str) -> (FTAuth, Account):
+def gen_account_data(data: dict, account_type: AccountType) -> tuple[FTAuth, Account]:
     aid = gen_snowflake_id()
     role_id = gen_snowflake_id()
-    pass_salt = gen_pass_salt()
-    pass_hash = gen_password_hash(pw=data['pass'], pass_salt=pass_salt)
-
-    return (
-        FTAuth(
-            email=data['email'],
-            aid=aid,
-            pass_hash=pass_hash,
-            pass_salt=pass_salt,
-        ),
-        Account(
-            aid=aid,
-            email=data['email'],
-            region=data['region'],
-            role=data['role'],
-            role_id=role_id,
-        )
+    ft_auth = FTAuth(
+        email=data['email'],
+        aid=aid,
+        role_id=role_id,
     )
 
+    if account_type == AccountType.FT:
+        pass_salt = gen_pass_salt()
+        ft_auth.pass_salt = pass_salt
+        ft_auth.pass_hash = gen_password_hash(pw=data['pass'], pass_salt=pass_salt)
+    else:
+        ft_auth.sso_id = data['sso_id']
 
-def match_password(pass_hash: str, pw: str, pass_salt: str):
-    return pass_hash == gen_password_hash(pw=pw, pass_salt=pass_salt)
+    account = Account(
+        aid=aid,
+        email=data['email'],
+        region=data['region'],
+        role=data['role'],
+        role_id=role_id,
+        account_type=account_type
+    )
+
+    return (ft_auth, account)
