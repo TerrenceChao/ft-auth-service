@@ -1,13 +1,16 @@
 from typing import Any, Union, Callable, Optional, Tuple
-from pydantic import EmailStr, BaseModel
+from pydantic import EmailStr
 from decimal import Decimal
 from dataclasses import dataclass, asdict
+from fastapi.responses import RedirectResponse
 import hashlib
 import json
 import uuid
 
+
 from src.infra.apis.facebook import GetUserInfoResponse, StatePayload
 from src.configs.constants import AccountType
+from src.infra.apis.facebook import FBLoginRepository
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
@@ -25,18 +28,34 @@ class PreAccountData:
     email: str
     sso_id: str
 
+class SSORepositories:
+
+    def __init__(self, fb: FBLoginRepository) -> None:
+        self.fb = fb
+
 
 class SSOService:
     def __init__(
-        self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email
+        self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email,  sso_repositories: SSORepositories,
     ) -> None:
         self.auth_repo = auth_repo
         self.obj_storage = obj_storage
         self.email = email
+        self.sso_repositories = sso_repositories
         self.__cls_name = self.__class__.__name__
 
+    def fb_register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any) -> AccountVO:
+        oauth_data = self.sso_repositories.fb.oauth(code)
+        if not oauth_data or not oauth_data.access_token:
+            return f'there is no accesstoken \n {oauth_data}'
+        user_info = self.sso_repositories.fb.get_user_info(access_token=oauth_data.access_token)
+        return self._register_or_login(user_info, state, AccountType.FB, auth_db, account_db)
+    
+    def fb_dialog(self, role: str, region: str) -> RedirectResponse:
+        return self.sso_repositories.fb.dialog(role, region)
 
-    def register_or_login(
+
+    def _register_or_login(
         self,
         user_info: GetUserInfoResponse,
         state: str,

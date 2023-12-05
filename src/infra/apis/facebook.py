@@ -6,8 +6,7 @@ from pydantic import BaseModel
 
 from src.repositories.third_party_login_repository import IThirdPartyLogin, ThirdPartyUserInfo
 from src.infra.utils.url_util import parse_url
-FACEBOOK_APP_ID = '829288179205024'
-FACEBOOK_APP_SECRET = '0de1fb7a89306e010a538ef8e9da0728'
+from src.configs.conf import FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, REDIRECT_URI
 
 FACEBOOK_APP_VERSION = 'v18.0'
 FACEBOOK_GRAPH_URL = f'https://graph.facebook.com/{FACEBOOK_APP_VERSION}'
@@ -59,7 +58,7 @@ class FBLoginRepository:
                 'client_id': self.facebook_app_id,
                 'client_secret': self.facebook_app_secret,
                 'code': code,
-                'redirect_uri': 'http://localhost:8002/auth/api/v2/auth-nosql/fb/login',
+                'redirect_uri': REDIRECT_URI,
             }
         resp = requests.get(
             f'{FACEBOOK_GRAPH_URL}/oauth/access_token?',
@@ -78,7 +77,7 @@ class FBLoginRepository:
         state = StatePayload(role=role, region=region)
         payload = {
             'client_id': self.facebook_app_id,
-            'redirect_uri': 'http://localhost:8002/auth/api/v2/auth-nosql/fb/login',
+            'redirect_uri': REDIRECT_URI,
             'state': json.dumps(state.dict()),
         }
         path = f'{FACEBOOK_URL}/dialog/oauth?'

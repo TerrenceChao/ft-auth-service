@@ -9,7 +9,7 @@ from pydantic import EmailStr
 from src.configs.constants import AccountType, HERE_WE_ARE
 from src.infra.apis.facebook import FBLoginRepository
 from ..res.response import res_success, res_err
-from ...services.sso_service import SSOService
+from ...services.sso_service import SSOService, SSORepositories
 from ...configs.database import get_db, get_client
 from ...configs.s3 import get_s3_resource
 from ...infra.utils.auth_util import get_public_key
@@ -23,10 +23,14 @@ log.basicConfig(filemode='w', level=log.INFO)
 auth_repo = AuthRepository()
 global_object_storage = GlobalObjectStorage(s3=get_s3_resource())
 email = Email()
+sso_repositories = SSORepositories(
+    fb = FBLoginRepository()
+)
 sso_service = SSOService(
     auth_repo=auth_repo,
     obj_storage=global_object_storage,
     email=email,
+    sso_repositories=sso_repositories,
 )
 
 router = APIRouter(
@@ -43,17 +47,10 @@ def registered_or_login(
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db)
 ):
-    fb = FBLoginRepository()
-    oauth_data = fb.oauth(code)
-    if not oauth_data or not oauth_data.access_token:
-        return f'there is no accesstoken \n {oauth_data}'
-    user_info = fb.get_user_info(access_token=oauth_data.access_token)
-    user_info.email = 'poasafddtrwe@gmail.asdfadsf'
-    return sso_service.register_or_login(user_info, state, AccountType.FB, auth_db, account_db)
+    return sso_service.fb_register_or_login(code, state, auth_db, account_db)
 
 @router.get('/fb/dialog')
 def dialog(
     role: str = '',
 ):
-    fb = FBLoginRepository()
-    return fb.dialog(role, HERE_WE_ARE)
+    return sso_service.fb_dialog(role, HERE_WE_ARE)
