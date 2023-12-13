@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from typing import List, Optional
 from pydantic import BaseModel
 
-from src.repositories.third_party_login_repository import IThirdPartyLogin, ThirdPartyUserInfo
+from src.models.sso_api import GeneralUserInfo
 from src.infra.utils.url_util import parse_url
 from src.configs.conf import FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, REDIRECT_URI
 
@@ -13,11 +13,6 @@ FACEBOOK_GRAPH_URL = f'https://graph.facebook.com/{FACEBOOK_APP_VERSION}'
 FACEBOOK_URL = f'https://www.facebook.com/{FACEBOOK_APP_VERSION}'
 
 REDIRECT_URL = f'https://localhost:3002/api/login'
-
-class StatePayload(BaseModel):
-    verified_code: str = 'verified_code'
-    role: str
-    region: str
 
 class GetUserInfoResponse(BaseModel):
     id: str
@@ -73,15 +68,19 @@ class FBLoginRepository:
 
         return oauth_data 
 
-    def dialog(self, role: str, region: str) -> str:
-        state = StatePayload(role=role, region=region)
+    def dialog(self, state_payload: str) -> str:
         payload = {
             'client_id': self.facebook_app_id,
             'redirect_uri': REDIRECT_URI,
-            'state': json.dumps(state.dict()),
+            'state': state_payload,
         }
         path = f'{FACEBOOK_URL}/dialog/oauth?'
         full_path = parse_url(path, payload)
         resp = RedirectResponse(full_path)
         return resp
 
+    def fb_user_info_to_general(self, fb_user_info: GetUserInfoResponse) -> GeneralUserInfo:
+        return GeneralUserInfo(
+            id=fb_user_info.id,
+            email=fb_user_info.email,
+        )

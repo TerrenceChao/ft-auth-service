@@ -1,5 +1,5 @@
 from typing import Any, Union, Callable, Optional, Tuple
-from pydantic import EmailStr
+from pydantic import EmailStr, BaseModel
 from decimal import Decimal
 from dataclasses import dataclass, asdict
 from fastapi.responses import RedirectResponse
@@ -7,10 +7,11 @@ import hashlib
 import json
 import uuid
 
-
-from src.infra.apis.facebook import GetUserInfoResponse, StatePayload
+from src.models.sso_api import StatePayload, GeneralUserInfo
+from src.infra.apis.facebook import GetUserInfoResponse
 from src.configs.constants import AccountType
 from src.infra.apis.facebook import FBLoginRepository
+from src.infra.apis.google import GoogleLoginRepository
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
@@ -30,8 +31,9 @@ class PreAccountData:
 
 class SSORepositories:
 
-    def __init__(self, fb: FBLoginRepository) -> None:
+    def __init__(self, fb: FBLoginRepository, google: GoogleLoginRepository) -> None:
         self.fb = fb
+        self.google = google
 
 
 class SSOService:
@@ -49,15 +51,29 @@ class SSOService:
         if not oauth_data or not oauth_data.access_token:
             return f'there is no accesstoken \n {oauth_data}'
         user_info = self.sso_repositories.fb.get_user_info(access_token=oauth_data.access_token)
-        return self._register_or_login(user_info, state, AccountType.FB, auth_db, account_db)
+        general_user_info = self.sso_repositories.fb.fb_user_info_to_general(user_info)
+        return self._register_or_login(general_user_info, state, AccountType.FB, auth_db, account_db)
     
     def fb_dialog(self, role: str, region: str) -> RedirectResponse:
-        return self.sso_repositories.fb.dialog(role, region)
+        state_payload = self._make_state_payload_json(role, region)
+        return self.sso_repositories.fb.dialog(state_payload)
+    
+    def google_dialog(self, role: str, region: str) -> RedirectResponse:
+        state_payload = self._make_state_payload_json(role, region)
+        return self.sso_repositories.google.auth(state_payload)
+
+    def google_register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any):
+        oauth_data = self.sso_repositories.google.token(code)
+        if not oauth_data or not oauth_data.id_token:
+            return f'there is no accesstoken \n {oauth_data}'
+        user_info = self.sso_repositories.google.user_info(oauth_data.id_token)
+        general_user_info = self.sso_repositories.google.google_user_info_to_general(user_info)
+        return self._register_or_login(general_user_info, state, AccountType.GOOGLE, auth_db, account_db)
 
 
     def _register_or_login(
         self,
-        user_info: GetUserInfoResponse,
+        user_info: GeneralUserInfo,
         state: str,
         account_type: AccountType,
         auth_db: Any,
@@ -129,7 +145,7 @@ class SSOService:
     def __generate_account_data(
         self,
         state_payload: StatePayload,
-        user_info: GetUserInfoResponse,
+        user_info: GeneralUserInfo,
         account_type: AccountType,
         version: str,
     ):
@@ -208,6 +224,13 @@ class SSOService:
 
     def _parse_state(self, state: str) -> StatePayload:
         return StatePayload.parse_obj(json.loads(state))
+
+    def _make_state_payload_json(self, role: str, region: str) -> str:
+        state_payload = StatePayload(
+            role=role,
+            region=region,
+        )
+        return json.dumps(state_payload.dict())
 
     '''
     驗證登入資訊
