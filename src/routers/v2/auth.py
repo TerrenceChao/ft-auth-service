@@ -9,6 +9,7 @@ from pydantic import EmailStr
 from src.configs.constants import AccountType, HERE_WE_ARE
 from src.infra.apis.facebook import FBLoginRepository
 from src.infra.apis.google import GoogleLoginRepository
+from src.routers.req.auth_validation import check_valid_role
 from ..res.response import res_success, res_err
 from ...services.sso_service import SSOService, SSORepositories
 from ...configs.database import get_db, get_client
@@ -53,7 +54,7 @@ def fb_registered_or_login(
 
 @router.get('/fb/dialog')
 def fb_dialog(
-    role: str = '',
+    role: str = Depends(check_valid_role),
 ):
     return sso_service.fb_dialog(role, HERE_WE_ARE)
 
@@ -68,6 +69,6 @@ def google_registered_or_login(
 
 @router.get('/google/dialog')
 def google_dialog(
-    role: str = '',
+    role: str = Depends(check_valid_role),
 ):
     return sso_service.google_dialog(role, HERE_WE_ARE)

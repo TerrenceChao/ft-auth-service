@@ -22,6 +22,7 @@ REGION_MAPPING = {
 
 HERE_WE_ARE = REGION_MAPPING[LOCAL_REGION]
 
+# TODO: 感覺改成 enum type 會好一點
 VALID_ROLES = set(['company', 'teacher'])
 
 DYNAMODB_KEYWORDS = set(['role', 'region'])

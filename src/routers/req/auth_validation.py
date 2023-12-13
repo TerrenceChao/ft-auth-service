@@ -35,9 +35,8 @@ def decrypt_meta_for_signup(
         if not 'role' in meta_json:
             raise ClientException(msg=f'role is required')
         
-        if not meta_json['role'] in VALID_ROLES:
-            raise ClientException(msg=f'role allowed only in {VALID_ROLES}')
-        
+        check_valid_role(meta_json['role'])
+
         if not 'pass' in meta_json:
             raise ClientException(msg=f'pass is required')
         
@@ -73,3 +72,7 @@ def decrypt_meta(
 
     except ClientException as e:
         raise ClientException(msg=e.msg)
+
+def check_valid_role(role: str) -> None:
+    if not role in VALID_ROLES:
+        raise ClientException(msg=f'role allowed only in {VALID_ROLES}')
