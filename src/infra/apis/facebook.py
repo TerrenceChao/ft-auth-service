@@ -6,13 +6,11 @@ from pydantic import BaseModel
 
 from src.models.sso_api import GeneralUserInfo
 from src.infra.utils.url_util import parse_url
-from src.configs.conf import FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, REDIRECT_URI
+from src.configs.conf import FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, FACEBOOK_REDIRECT_URI
 
 FACEBOOK_APP_VERSION = 'v18.0'
 FACEBOOK_GRAPH_URL = f'https://graph.facebook.com/{FACEBOOK_APP_VERSION}'
 FACEBOOK_URL = f'https://www.facebook.com/{FACEBOOK_APP_VERSION}'
-
-REDIRECT_URL = f'https://localhost:3002/api/login'
 
 class GetUserInfoResponse(BaseModel):
     id: str
@@ -29,6 +27,7 @@ class FBLoginRepository:
         self.facebook_app_secret = FACEBOOK_APP_SECRET
         self.facebook_app_version = FACEBOOK_APP_VERSION
         self.facebook_url = f'https://graph.facebook.com/{FACEBOOK_APP_VERSION}'
+        self.redircet_uri = FACEBOOK_REDIRECT_URI
     
     def get_user_info(self, access_token: str, fields: Optional[List[str]] = None) -> GetUserInfoResponse:
         if not fields:
@@ -53,7 +52,7 @@ class FBLoginRepository:
                 'client_id': self.facebook_app_id,
                 'client_secret': self.facebook_app_secret,
                 'code': code,
-                'redirect_uri': REDIRECT_URI,
+                'redirect_uri': self.redircet_uri,
             }
         resp = requests.get(
             f'{FACEBOOK_GRAPH_URL}/oauth/access_token?',
@@ -71,7 +70,7 @@ class FBLoginRepository:
     def dialog(self, state_payload: str) -> str:
         payload = {
             'client_id': self.facebook_app_id,
-            'redirect_uri': REDIRECT_URI,
+            'redirect_uri': self.redircet_uri,
             'state': state_payload,
         }
         path = f'{FACEBOOK_URL}/dialog/oauth?'
