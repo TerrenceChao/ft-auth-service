@@ -76,3 +76,5 @@ def decrypt_meta(
 def check_valid_role(role: str) -> None:
     if not role in VALID_ROLES:
         raise ClientException(msg=f'role allowed only in {VALID_ROLES}')
+    
+    return role

@@ -1,21 +1,15 @@
-from typing import Any, Union, Callable, Optional, Tuple
-from pydantic import EmailStr, BaseModel
-from decimal import Decimal
+from typing import Any, Optional
+from pydantic import EmailStr
 from dataclasses import dataclass, asdict
-from fastapi.responses import RedirectResponse
-import hashlib
 import json
-import uuid
 
+from src.services.auth_service import AuthService
 from src.models.sso_api import StatePayload, GeneralUserInfo
 from src.infra.apis.facebook import GetUserInfoResponse
 from src.configs.constants import AccountType
-from src.infra.apis.facebook import FBLoginRepository
-from src.infra.apis.google import GoogleLoginRepository
-from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
+from ..repositories.auth_repository import IAuthRepository
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
-from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.apis.email import Email
 from ..configs.exceptions import *
@@ -29,48 +23,15 @@ class PreAccountData:
     email: str
     sso_id: str
 
-class SSORepositories:
-
-    def __init__(self, fb: FBLoginRepository, google: GoogleLoginRepository) -> None:
-        self.fb = fb
-        self.google = google
+log.basicConfig(filemode='w', level=log.INFO)
 
 
-class SSOService:
-    def __init__(
-        self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email,  sso_repositories: SSORepositories,
-    ) -> None:
-        self.auth_repo = auth_repo
-        self.obj_storage = obj_storage
-        self.email = email
-        self.sso_repositories = sso_repositories
+class SSOAuthService(AuthService):
+    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email):
+        super().__init__(auth_repo, obj_storage, email)
         self.__cls_name = self.__class__.__name__
 
-    def fb_register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any) -> AccountVO:
-        oauth_data = self.sso_repositories.fb.oauth(code)
-        if not oauth_data or not oauth_data.access_token:
-            return f'there is no accesstoken \n {oauth_data}'
-        user_info = self.sso_repositories.fb.get_user_info(access_token=oauth_data.access_token)
-        general_user_info = self.sso_repositories.fb.fb_user_info_to_general(user_info)
-        return self._register_or_login(general_user_info, state, AccountType.FB, auth_db, account_db)
-    
-    def fb_dialog(self, role: str, region: str) -> RedirectResponse:
-        state_payload = self._make_state_payload_json(role, region)
-        return self.sso_repositories.fb.dialog(state_payload)
-    
-    def google_dialog(self, role: str, region: str) -> RedirectResponse:
-        state_payload = self._make_state_payload_json(role, region)
-        return self.sso_repositories.google.auth(state_payload)
-
-    def google_register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any):
-        oauth_data = self.sso_repositories.google.token(code)
-        if not oauth_data or not oauth_data.id_token:
-            return f'there is no accesstoken \n {oauth_data}'
-        user_info = self.sso_repositories.google.user_info(oauth_data.id_token)
-        general_user_info = self.sso_repositories.google.google_user_info_to_general(user_info)
-        return self._register_or_login(general_user_info, state, AccountType.GOOGLE, auth_db, account_db)
-
-
+   
     def _register_or_login(
         self,
         user_info: GeneralUserInfo,
@@ -119,7 +80,7 @@ class SSOService:
         auth = self.__validation(user_info.email, user_info.id, state_payload.region, auth_db)
 
         aid = auth['aid']
-        account_vo = self.__find_account(aid, account_db)
+        account_vo = self.find_account(aid, account_db)
         return account_vo
 
     def __register(
@@ -134,7 +95,7 @@ class SSOService:
         auth, account = self.__generate_account_data(
             state_payload, user_info, account_type, version
         )
-        return self.__save_account_data(auth, account, auth_db, account_db)
+        return self.save_account_data(auth, account, auth_db, account_db)
 
     """
     產生帳戶資料
@@ -167,60 +128,7 @@ class SSOService:
         pre_account_data_d = asdict(pre_account_data)
         auth, account = auth_util.gen_account_data(pre_account_data_d, account_type)
         return (auth, account)  # all good!
-
-    """
-        將帳戶資料寫入 DB
-        1. 將帳戶資料寫入 DynamoDB
-            res = { aid, region, email, email2, is_active, role, role_id } = account
-        2. 錯誤處理..
-            a. 先嘗試刪除 DynamoDB
-            b. 再嘗試刪除 S3
-    """
-    def __save_account_data(
-        self,
-        auth: FTAuth,
-        account: Account,
-        auth_db: Any,
-        account_db: Any,
-    ) -> AccountVO:
-        res = None
-        try:
-            # 1. 將帳戶資料寫入 DynamoDB
-            res = self.auth_repo.create_account(
-                auth_db=auth_db, account_db=account_db, auth=auth, account=account
-            )
-            return AccountVO.parse_obj(res)  # all good!
-
-        except Exception as e:
-            log.error(
-                f"{self.__cls_name}.signup [db_create_err] \
-                auth:%s, account:%s, res:%s, err:%s",
-                auth,
-                account,
-                res,
-                e.__str__(),
-            )
-
-            # 2. 錯誤處理..
-            try:
-                email = auth.email
-                self.auth_repo.delete_account_by_email(
-                    auth_db=auth_db, account_db=account_db, email=email
-                )
-                self.obj_storage.delete(bucket=email)
-
-            except Exception as e:
-                log.error(
-                    f"{self.__cls_name}.signup [rollback_err] \
-                    auth:%s, account:%s, res:%s, err:%s",
-                    auth,
-                    account,
-                    res,
-                    e.__str__(),
-                )
-                raise ServerException(msg="rollback_err")
-
-            raise ServerException(msg="db_create_err")
+ 
 
     def _parse_state(self, state: str) -> StatePayload:
         return StatePayload.parse_obj(json.loads(state))
@@ -276,15 +184,3 @@ class SSOService:
 
         # 4. return auth
         return auth  # all good!
-    
-
-    '''
-    取得帳戶資料
-        從 DynamoDB (accounts) 取得必要的帳戶資料
-    '''
-    def __find_account(self, aid: str, account_db: Any) -> AccountVO:
-        res = self.auth_repo.find_account(db=account_db, aid=aid)
-        if res is None:
-            raise NotFoundException(msg='account_not_found')
-
-        return AccountVO.parse_obj(res)

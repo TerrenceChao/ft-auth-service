@@ -47,7 +47,7 @@ class FBLoginRepository:
         
         return user_info
 
-    def oauth(self, code) -> str:
+    def oauth(self, code) -> OauthResponse:
         payload = {
                 'client_id': self.facebook_app_id,
                 'client_secret': self.facebook_app_secret,
@@ -67,7 +67,7 @@ class FBLoginRepository:
 
         return oauth_data 
 
-    def dialog(self, state_payload: str) -> str:
+    def dialog(self, state_payload: str) -> RedirectResponse:
         payload = {
             'client_id': self.facebook_app_id,
             'redirect_uri': self.redircet_uri,
