@@ -1,4 +1,5 @@
 from .conf import LOCAL_REGION
+from enum import Enum
 
 REGION_MAPPING = {
     'us-east-1': 'us-e1',
@@ -21,6 +22,12 @@ REGION_MAPPING = {
 
 HERE_WE_ARE = REGION_MAPPING[LOCAL_REGION]
 
+# TODO: 感覺改成 enum type 會好一點
 VALID_ROLES = set(['company', 'teacher'])
 
 DYNAMODB_KEYWORDS = set(['role', 'region'])
+
+class AccountType(str, Enum):
+    FT = 'ft'
+    FB = 'fb'
+    GOOGLE = 'google'

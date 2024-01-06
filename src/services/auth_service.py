@@ -4,6 +4,7 @@ from decimal import Decimal
 import hashlib
 import uuid
 
+from src.configs.constants import AccountType
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
@@ -85,7 +86,7 @@ class AuthService:
             # 透過 auth_service.funcntion(...) 判斷是否允許 login/signup; 並且調整註解
 
             # 3. 將帳戶資料寫入 DB
-            account_vo = self.__save_account_data(auth, account, auth_db, account_db)
+            account_vo = self.save_account_data(auth, account, auth_db, account_db)
             return account_vo
         
         except ClientException as e:
@@ -129,7 +130,7 @@ class AuthService:
 
             # 2. 取得帳戶資料
             aid = auth['aid']
-            account_vo = self.__find_account(aid, account_db)
+            account_vo = self.find_account(aid, account_db)
             return account_vo
         
         except ClientException as e:
@@ -231,7 +232,7 @@ class AuthService:
 
         # 2. 產生 DynamoDB 需要的帳戶資料
         data['email'] = email
-        auth, account = auth_util.gen_account_data(data, 'ft')
+        auth, account = auth_util.gen_account_data(data, AccountType.FT)
         return (auth, account) # all good!
 
     '''
@@ -242,7 +243,7 @@ class AuthService:
             a. 先嘗試刪除 DynamoDB
             b. 再嘗試刪除 S3
     '''
-    def __save_account_data(
+    def save_account_data(
         self,
         auth: FTAuth, 
         account: Account,
@@ -326,7 +327,7 @@ class AuthService:
     取得帳戶資料
         從 DynamoDB (accounts) 取得必要的帳戶資料
     '''
-    def __find_account(self, aid: str, account_db: Any):
+    def find_account(self, aid: str, account_db: Any):
         res = self.auth_repo.find_account(db=account_db, aid=aid)
         if res is None:
             raise NotFoundException(msg='account_not_found')
