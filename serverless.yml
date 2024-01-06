@@ -29,24 +29,31 @@ provider:
   region: ${opt:region, "ap-northeast-1"}
   stage: ${opt:stage, "dev"}
   iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:*
-      Resource:
-          - arn:aws:dynamodb:ap-northeast-1:549734764220:table/auth
-          - arn:aws:dynamodb:ap-northeast-1:549734764220:table/accounts
+  - Effect: Allow
+    Action:
+    - dynamodb:*
+    Resource:
+    - arn:aws:dynamodb:ap-northeast-1:549734764220:table/auth
+    - arn:aws:dynamodb:ap-northeast-1:549734764220:table/accounts
 
-    - Effect: Allow
-      Action:
-        - "s3:PutObject"
-        - "s3:PutObjectAcl"
-        - "s3:GetObject"
-        - "s3:GetObjectAcl"
-        - "s3:List*"
-        - "s3:AbortMultipartUpload"
-      Resource:
-        - "arn:aws:s3:::foreign-teacher"
-        - "arn:aws:s3:::foreign-teacher/*"
+  - Effect: Allow
+    Action:
+    - "s3:PutObject"
+    - "s3:PutObjectAcl"
+    - "s3:GetObject"
+    - "s3:GetObjectAcl"
+    - "s3:List*"
+    - "s3:AbortMultipartUpload"
+    Resource:
+    - "arn:aws:s3:::foreign-teacher"
+    - "arn:aws:s3:::foreign-teacher/*"
+
+  - Effect: Allow
+    Action:
+    - ses:SendEmail
+    Resource:
+    - arn:aws:ses:ap-northeast-1:549734764220:identity/*
+    - arn:aws:ses:ap-northeast-1:549734764220:configuration-set/*
 
 
 custom:
@@ -56,30 +63,30 @@ custom:
       name: ft-auth-service
       description: ForeignTeacher -> Auth Service
       compatibleRuntimes:
-        - python3.8
+      - python3.8
 
 functions:
   app:
     package:
       patterns:
-        - "!requirements.txt"
-        - "!package.json"
-        - "!package-lock.json"
-        - "!.serverless/**"
-        - "!.venv/**"
-        - "!node_modules/**"
-        - "!__pycache__/**"
-        - "!**/__pycache__/**"
+      - "!requirements.txt"
+      - "!package.json"
+      - "!package-lock.json"
+      - "!.serverless/**"
+      - "!.venv/**"
+      - "!node_modules/**"
+      - "!__pycache__/**"
+      - "!**/__pycache__/**"
 
     handler: main.handler
     environment:
       STAGE: ${self:provider.stage}
     layers:
-      - { Ref: PythonRequirementsLambdaLayer }
+    - {Ref: PythonRequirementsLambdaLayer}
     events:
-      - http:
-          method: any
-          path: /{proxy+}
+    - http:
+        method: any
+        path: /{proxy+}
 
 plugins:
-  - serverless-python-requirements
+- serverless-python-requirements
