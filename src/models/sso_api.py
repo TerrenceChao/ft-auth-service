@@ -8,3 +8,6 @@ class StatePayload(BaseModel):
 class GeneralUserInfo(BaseModel):
     id: str
     email: str
+
+class RedirectUrl(BaseModel):
+    redirect_url: str

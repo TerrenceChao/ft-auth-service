@@ -22,12 +22,12 @@ FT_BUCKET = os.getenv('FT_BUCKET', 'foreign-teacher')
 # FB App conf
 FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID', '829288179205024')
 FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET', '0de1fb7a89306e010a538ef8e9da0728')
-FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI', 'http://localhost:8002/auth/api/v2/auth-nosql/fb/login')
+FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI', 'http://localhost:8006/api/v2/auth/fb/login')
 
 # Google App conf
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '652252489794-hf50ke4tqvp39hf27tbpfi06evsttuh8.apps.googleusercontent.com')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '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')
-GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8002/auth/api/v2/auth-nosql/google/login')
+GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8006/api/v2/auth/google/login')
 
 
 # email conf

@@ -7,6 +7,7 @@ from src.infra.apis.google import GoogleLoginRepository
 from src.services.fb_auth_service import FBAuthService
 from src.services.google_auth_service import GoogleAuthService
 from src.routers.req.auth_validation import check_valid_role
+from src.routers.res.response import res_success
 from ...configs.database import get_db
 from ...configs.s3 import get_s3_resource
 from ...infra.db.nosql.auth_repository import AuthRepository
@@ -48,13 +49,15 @@ def fb_registered_or_login(
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db)
 ):
-    return fb_auth_service.register_or_login(code, state, auth_db, account_db)
+    res = fb_auth_service.register_or_login(code, state, auth_db, account_db)
+    return res_success(data=res)
 
 @router.get('/fb/dialog')
 def fb_dialog(
     role: str = Depends(check_valid_role),
 ):
-    return fb_auth_service.dialog(role, HERE_WE_ARE)
+    data = fb_auth_service.dialog(role, HERE_WE_ARE)
+    return res_success(data=data)
 
 @router.get('/google/login')
 def google_registered_or_login(
@@ -63,10 +66,12 @@ def google_registered_or_login(
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db)
 ):
-   return google_auth_service.register_or_login(code, state, auth_db, account_db)
+   res = google_auth_service.register_or_login(code, state, auth_db, account_db)
+   return res_success(data=res)
 
 @router.get('/google/dialog')
 def google_dialog(
     role: str = Depends(check_valid_role),
 ):
-    return google_auth_service.dialog(role, HERE_WE_ARE)
+    data = google_auth_service.dialog(role, HERE_WE_ARE)
+    return res_success(data=data)
