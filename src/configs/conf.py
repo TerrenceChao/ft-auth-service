@@ -8,7 +8,7 @@ TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 60 * 60 * 24 * 30))
 
 # db conf
 LOCAL_DB = 'http://localhost:8000'
-DYNAMODB_URL = os.getenv('DYNAMODB_URL', 'http://localhost:8000')
+DYNAMODB_URL = os.getenv('DYNAMODB_URL', None)
 
 # db table conf
 TABLE_AUTH = os.getenv('TABLE_AUTH', 'auth')
