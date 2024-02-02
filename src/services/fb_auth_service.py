@@ -2,7 +2,7 @@ from src.repositories.auth_repository import IAuthRepository
 from src.repositories.object_storage import IObjectStorage
 from src.services.sso_auth_service import SSOAuthService
 from src.infra.apis.facebook import FBLoginRepository
-
+from src.models.sso_api import RedirectUrl
 from src.configs.constants import AccountType
 from fastapi.responses import RedirectResponse
 from ..models.auth_value_objects import AccountVO
@@ -25,6 +25,6 @@ class FBAuthService(SSOAuthService):
         general_user_info = self.fb.fb_user_info_to_general(user_info)
         return self._register_or_login(general_user_info, state, AccountType.FB, auth_db, account_db)
     
-    def dialog(self, role: str, region: str) -> RedirectResponse:
+    def dialog(self, role: str, region: str) -> RedirectUrl:
         state_payload = self._make_state_payload_json(role, region)
         return self.fb.dialog(state_payload)

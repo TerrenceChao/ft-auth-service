@@ -1,12 +1,9 @@
 
 import requests
-import json
-from fastapi.responses import RedirectResponse
-from typing import List, Optional
 from pydantic import BaseModel
 
 from src.configs.conf import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
-from src.models.sso_api import GeneralUserInfo
+from src.models.sso_api import GeneralUserInfo, RedirectUrl
 from src.infra.utils.url_util import parse_url
 
 class GoogleUserInfoResponse(BaseModel):
@@ -22,7 +19,7 @@ class GoogleLoginRepository:
         self.client_secret = GOOGLE_CLIENT_SECRET
         self.redirect_uri = GOOGLE_REDIRECT_URI
 
-    def auth(self, state_payload: str) -> RedirectResponse:
+    def auth(self, state_payload: str) -> RedirectUrl:
         payload = {
             'client_id': self.client_id,
             'response_type': 'code',
@@ -30,7 +27,8 @@ class GoogleLoginRepository:
             'redirect_uri': self.redirect_uri,
             'state': state_payload,
         }
-        return RedirectResponse(parse_url('https://accounts.google.com/o/oauth2/auth?', payload))
+        full_path = parse_url('https://accounts.google.com/o/oauth2/auth?', payload)
+        return RedirectUrl(redirect_url=full_path)
         
     def token(self, code: str) -> OauthResponse:
         payload = {
