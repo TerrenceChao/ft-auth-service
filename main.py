@@ -13,15 +13,17 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from src.configs import exceptions
-from src.routers.v1 import auth
+from src.routers.v1 import auth, notify
 from src.routers.v2 import auth as auth_v2
 
 
 router_v1 = APIRouter(prefix='/auth/api/v1')
 router_v1.include_router(auth.router)
+router_v1.include_router(notify.router)
 
 router_v2 = APIRouter(prefix='/auth/api/v2')
 router_v2.include_router(auth_v2.router)
+
 
 STAGE = os.environ.get('STAGE')
 root_path = '/' if not STAGE else f'/{STAGE}'
