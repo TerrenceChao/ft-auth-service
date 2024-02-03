@@ -27,6 +27,10 @@ class IAuthRepository(ABC):
     @abstractmethod
     def find_account(self, db: Any, aid: Decimal):
         pass
+    
+    @abstractmethod
+    def find_account_by_role_id(self, db: Any, role_id: Decimal):
+        pass
 
     @abstractmethod
     def find_auth(self, db: Any, email: EmailStr):

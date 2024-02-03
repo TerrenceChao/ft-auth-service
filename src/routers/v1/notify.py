@@ -26,12 +26,12 @@ router = APIRouter(
 )
 
 
-@router.get('/notify/email')
-def get_pubkey(
+@router.post('/notify/email')
+async def send_contact_by_email(
     payload: EmailVO = Body(...),
     account_db: Any = Depends(get_db)
 ):
-    _email_service.send_contact(
+    await _email_service.send_contact(
         account_db,
         payload
     )

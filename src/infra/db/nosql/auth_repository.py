@@ -9,7 +9,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 from .schemas import *
-from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
+from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, TABLE_ACCOUNT_INDEX, BATCH_LIMIT
 from ....configs.constants import DYNAMODB_KEYWORDS
 from ....configs.database import client_err_msg, response_success
 from ....configs.exceptions import *
@@ -113,6 +113,16 @@ class AuthRepository(IAuthRepository):
                             'ConditionExpression': 'attribute_not_exists(aid) AND attribute_not_exists(email)',
                         }
                     },
+                    {
+                        'Put': {
+                            'TableName': TABLE_ACCOUNT_INDEX,
+                            'Item': {
+                                'role_id': account.role_id,
+                                'aid': account.aid,
+                            },
+                            'ConditionExpression': 'attribute_not_exists(role_id) AND attribute_not_exists(aid)',
+                        }
+                    },
                 ]
             )
             if response_success(response):
@@ -206,6 +216,32 @@ class AuthRepository(IAuthRepository):
             err = e.__str__()
             log.error(f'{self.__cls_name}.find_account error [db_read_error], \
                 aid:%s res:%s, err:%s', aid, res, err)
+            raise Exception('db_read_error')
+
+
+    def find_account_by_role_id(self, db: Any, role_id: Decimal):
+        res = None
+        result = None
+        
+        try:
+            table = db.Table(TABLE_ACCOUNT_INDEX)
+            # log.info(table)
+            res = table.get_item(Key={'role_id': role_id})
+            if 'Item' in res:
+                result = res['Item']
+            
+            return result
+
+        except ClientError as e:
+            err = client_err_msg(e)
+            log.error(f'{self.__cls_name}.find_account_by_role_id error [read_req_error], \
+                role_id:%s res:%s, err:%s', role_id, res, err)
+            raise Exception('read_req_error')
+
+        except Exception as e:
+            err = e.__str__()
+            log.error(f'{self.__cls_name}.find_account_by_role_id error [db_read_error], \
+                role_id:%s res:%s, err:%s', role_id, res, err)
             raise Exception('db_read_error')
 
 

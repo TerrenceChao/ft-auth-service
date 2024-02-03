@@ -13,6 +13,7 @@ DYNAMODB_URL = os.getenv('DYNAMODB_URL', None)
 # db table conf
 TABLE_AUTH = os.getenv('TABLE_AUTH', 'auth')
 TABLE_ACCOUNT = os.getenv('TABLE_ACCOUNT', 'accounts')
+TABLE_ACCOUNT_INDEX = os.getenv('TABLE_ACCOUNT_INDEX', 'account_indexs')
 BATCH_LIMIT = int(os.getenv('BATCH_LIMIT', '20'))
 
 # s3 conf

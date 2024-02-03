@@ -15,8 +15,8 @@ class EmailService:
         self.email = email
         self.__cls_name = self.__class__.__name__
 
-    def __find_account(self, account_db: Any, aid: str) -> (AccountVO):
-        res = self.auth_repo.find_account(db=account_db, aid=aid)
+    def __find_account(self, account_db: Any, role_id: str) -> (AccountVO):
+        res = self.auth_repo.find_account_by_role_id(db=account_db, role_id=role_id)
         if res is None:
             raise NotFoundException(msg='account_not_found')
 
@@ -36,11 +36,11 @@ class EmailService:
         try:
             sender = self.__find_account(
                 account_db=account_db,
-                aid=payload.sender_id,
+                role_id=payload.sender_id,
             )
             recipient = self.__find_account(
                 account_db=account_db,
-                aid=payload.recipient_id,
+                role_id=payload.recipient_id,
             )
             await self.email.send_contact(
                 recipient=recipient.email,
