@@ -220,28 +220,35 @@ class AuthRepository(IAuthRepository):
 
 
     def find_account_by_role_id(self, db: Any, role_id: Decimal):
+        idx_res = None
         res = None
         result = None
         
         try:
-            table = db.Table(TABLE_ACCOUNT_INDEX)
+            idx_table = db.Table(TABLE_ACCOUNT_INDEX)
             # log.info(table)
-            res = table.get_item(Key={'role_id': role_id})
-            if 'Item' in res:
-                result = res['Item']
-            
+            idx_res = idx_table.get_item(Key={'role_id': role_id})
+            if idx_res.get('Item', None) != None and 'aid' in idx_res['Item']:
+                aid = idx_res['Item']['aid']
+                table = db.Table(TABLE_ACCOUNT)
+                res = table.get_item(Key={'aid': aid})
+                if res.get('Item', None) != None:
+                    result = res['Item']
+
             return result
 
         except ClientError as e:
             err = client_err_msg(e)
             log.error(f'{self.__cls_name}.find_account_by_role_id error [read_req_error], \
-                role_id:%s res:%s, err:%s', role_id, res, err)
+                role_id:%s idx_res:%s, res:%s, err:%s', \
+                    role_id, idx_res, res, err)
             raise Exception('read_req_error')
 
         except Exception as e:
             err = e.__str__()
             log.error(f'{self.__cls_name}.find_account_by_role_id error [db_read_error], \
-                role_id:%s res:%s, err:%s', role_id, res, err)
+                role_id:%s idx_res:%s, res:%s, err:%s', \
+                    role_id, idx_res, res, err)
             raise Exception('db_read_error')
 
 
