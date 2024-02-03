@@ -143,33 +143,30 @@ class AuthRepository(IAuthRepository):
             raise Exception('db_insert_error')
 
 
-    def delete_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr):
+    def delete_account(self, auth_db: Any, account_db: Any, auth: FTAuth):
         auth_res = None
         response = None
         deleted = False
 
         try:
-            # 1. find auth by email
-            auth_table = auth_db.Table(TABLE_AUTH)
-            # log.info(auth_table)
-            auth_res = auth_table.get_item(Key={'email': email})
-            if not 'Item' in auth_res:
-                return deleted # False
-            
-            # 2. delete auth & account in a transaction
-            aid = auth_res['Item']['aid']
             response = account_db.meta.client.transact_write_items(
                 TransactItems=[
                     {
                         'Delete': {
                             'TableName': TABLE_AUTH,
-                            'Key': {'email': email},
+                            'Key': {'email': auth.email},
                         }
                     },
                     {
                         'Delete': {
                             'TableName': TABLE_ACCOUNT,
-                            'Key': {'aid': aid},
+                            'Key': {'aid': auth.aid},
+                        }
+                    },
+                    {
+                        'Delete': {
+                            'TableName': TABLE_ACCOUNT_INDEX,
+                            'Key': {'role_id': auth.role_id},
                         }
                     },
                 ]
@@ -180,13 +177,13 @@ class AuthRepository(IAuthRepository):
             return deleted
 
         except ClientError as e:
-            log.error(f'{self.__cls_name}.delete_account_by_email error [delete_req_error], \
+            log.error(f'{self.__cls_name}.delete_account error [delete_req_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
                 deleted, email, auth_res, response, client_err_msg(e))
             raise Exception('delete_req_error')
 
         except Exception as e:
-            log.error(f'{self.__cls_name}.delete_account_by_email error [db_delete_error], \
+            log.error(f'{self.__cls_name}.delete_account error [db_delete_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
                 deleted, email, auth_res, response, e.__str__())
             raise Exception('db_delete_error')        

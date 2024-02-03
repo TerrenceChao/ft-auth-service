@@ -5,22 +5,14 @@ from src.configs.constants import AccountType
 
 class BaseAuth(BaseEntity):
     email: EmailStr
-    aid: Optional[int] = None
+    aid: int
+    role_id: int
 
 
 class FTAuth(BaseAuth):
     pass_hash: Optional[str] = None
     pass_salt: Optional[str] = None
     sso_id: Optional[str] = None
-
-# TODO:
-class FacebookAuth(BaseAuth):
-    pass
-
-
-# TODO:
-class GoogleAuth(BaseAuth):
-    pass
 
 
 class Account(BaseEntity):
