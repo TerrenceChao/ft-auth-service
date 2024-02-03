@@ -1,7 +1,7 @@
 from typing import Any
 from ..repositories.auth_repository import IAuthRepository
 from ..models.auth_value_objects import AccountVO
-from ..models.email_value_objects import EmailVO
+from ..models.email_value_objects import EmailAuthVO
 from ..infra.apis.email import Email
 from ..configs.exceptions import *
 import logging as log
@@ -16,7 +16,8 @@ class EmailService:
         self.__cls_name = self.__class__.__name__
 
     def __find_account(self, account_db: Any, role_id: str) -> (AccountVO):
-        res = self.auth_repo.find_account_by_role_id(db=account_db, role_id=role_id)
+        res = self.auth_repo.find_account_by_role_id(
+            db=account_db, role_id=role_id)
         if res is None:
             raise NotFoundException(msg='account_not_found')
 
@@ -30,7 +31,7 @@ class EmailService:
     async def send_contact(
         self,
         account_db: Any,
-        payload: EmailVO
+        payload: EmailAuthVO
     ):
         log.debug(f'send contact, payload:{payload}')
         try:
@@ -38,10 +39,16 @@ class EmailService:
                 account_db=account_db,
                 role_id=payload.sender_id,
             )
+            if sender.role != payload.sender_role:
+                raise ForbiddenException(msg='sender_role_mismatch')
+
             recipient = self.__find_account(
                 account_db=account_db,
                 role_id=payload.recipient_id,
             )
+            if recipient.role != payload.recipient_role:
+                raise ForbiddenException(msg='recipient_role_mismatch')
+
             await self.email.send_contact(
                 recipient=recipient.email,
                 subject=payload.subject,
@@ -50,4 +57,4 @@ class EmailService:
 
         except Exception as e:
             log.error(f'{self.__cls_name} - send_contact: {e}')
-            raise ServerException(msg='send_contact error')
+            raise_http_exception(e)
