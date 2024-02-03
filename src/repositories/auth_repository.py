@@ -21,11 +21,15 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    def delete_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr):
+    def delete_account(self, auth_db: Any, account_db: Any, auth: FTAuth):
         pass
 
     @abstractmethod
     def find_account(self, db: Any, aid: Decimal):
+        pass
+    
+    @abstractmethod
+    def find_account_by_role_id(self, db: Any, role_id: Decimal):
         pass
 
     @abstractmethod

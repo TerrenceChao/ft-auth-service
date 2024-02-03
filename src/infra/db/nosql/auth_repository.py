@@ -9,7 +9,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 from .schemas import *
-from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, BATCH_LIMIT
+from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, TABLE_ACCOUNT_INDEX, BATCH_LIMIT
 from ....configs.constants import DYNAMODB_KEYWORDS
 from ....configs.database import client_err_msg, response_success
 from ....configs.exceptions import *
@@ -113,6 +113,16 @@ class AuthRepository(IAuthRepository):
                             'ConditionExpression': 'attribute_not_exists(aid) AND attribute_not_exists(email)',
                         }
                     },
+                    {
+                        'Put': {
+                            'TableName': TABLE_ACCOUNT_INDEX,
+                            'Item': {
+                                'role_id': account.role_id,
+                                'aid': account.aid,
+                            },
+                            'ConditionExpression': 'attribute_not_exists(role_id) AND attribute_not_exists(aid)',
+                        }
+                    },
                 ]
             )
             if response_success(response):
@@ -133,33 +143,30 @@ class AuthRepository(IAuthRepository):
             raise Exception('db_insert_error')
 
 
-    def delete_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr):
+    def delete_account(self, auth_db: Any, account_db: Any, auth: FTAuth):
         auth_res = None
         response = None
         deleted = False
 
         try:
-            # 1. find auth by email
-            auth_table = auth_db.Table(TABLE_AUTH)
-            # log.info(auth_table)
-            auth_res = auth_table.get_item(Key={'email': email})
-            if not 'Item' in auth_res:
-                return deleted # False
-            
-            # 2. delete auth & account in a transaction
-            aid = auth_res['Item']['aid']
             response = account_db.meta.client.transact_write_items(
                 TransactItems=[
                     {
                         'Delete': {
                             'TableName': TABLE_AUTH,
-                            'Key': {'email': email},
+                            'Key': {'email': auth.email},
                         }
                     },
                     {
                         'Delete': {
                             'TableName': TABLE_ACCOUNT,
-                            'Key': {'aid': aid},
+                            'Key': {'aid': auth.aid},
+                        }
+                    },
+                    {
+                        'Delete': {
+                            'TableName': TABLE_ACCOUNT_INDEX,
+                            'Key': {'role_id': auth.role_id},
                         }
                     },
                 ]
@@ -170,13 +177,13 @@ class AuthRepository(IAuthRepository):
             return deleted
 
         except ClientError as e:
-            log.error(f'{self.__cls_name}.delete_account_by_email error [delete_req_error], \
+            log.error(f'{self.__cls_name}.delete_account error [delete_req_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
                 deleted, email, auth_res, response, client_err_msg(e))
             raise Exception('delete_req_error')
 
         except Exception as e:
-            log.error(f'{self.__cls_name}.delete_account_by_email error [db_delete_error], \
+            log.error(f'{self.__cls_name}.delete_account error [db_delete_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
                 deleted, email, auth_res, response, e.__str__())
             raise Exception('db_delete_error')        
@@ -206,6 +213,39 @@ class AuthRepository(IAuthRepository):
             err = e.__str__()
             log.error(f'{self.__cls_name}.find_account error [db_read_error], \
                 aid:%s res:%s, err:%s', aid, res, err)
+            raise Exception('db_read_error')
+
+
+    def find_account_by_role_id(self, db: Any, role_id: Decimal):
+        idx_res = None
+        res = None
+        result = None
+        
+        try:
+            idx_table = db.Table(TABLE_ACCOUNT_INDEX)
+            # log.info(table)
+            idx_res = idx_table.get_item(Key={'role_id': role_id})
+            if idx_res.get('Item', None) != None and 'aid' in idx_res['Item']:
+                aid = idx_res['Item']['aid']
+                table = db.Table(TABLE_ACCOUNT)
+                res = table.get_item(Key={'aid': aid})
+                if res.get('Item', None) != None:
+                    result = res['Item']
+
+            return result
+
+        except ClientError as e:
+            err = client_err_msg(e)
+            log.error(f'{self.__cls_name}.find_account_by_role_id error [read_req_error], \
+                role_id:%s idx_res:%s, res:%s, err:%s', \
+                    role_id, idx_res, res, err)
+            raise Exception('read_req_error')
+
+        except Exception as e:
+            err = e.__str__()
+            log.error(f'{self.__cls_name}.find_account_by_role_id error [db_read_error], \
+                role_id:%s idx_res:%s, res:%s, err:%s', \
+                    role_id, idx_res, res, err)
             raise Exception('db_read_error')
 
 

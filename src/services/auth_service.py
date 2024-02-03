@@ -264,10 +264,9 @@ class AuthService:
             
             # 2. 錯誤處理..
             try:
-                email = auth.email
-                self.auth_repo.delete_account_by_email(
-                        auth_db=auth_db, account_db=account_db, email=email)
-                self.obj_storage.delete(bucket=email)
+                self.auth_repo.delete_account(
+                        auth_db=auth_db, account_db=account_db, auth=auth)
+                self.obj_storage.delete(bucket=auth.email)
 
             except Exception as e:
                 log.error(f'{self.__cls_name}.signup [rollback_err] \

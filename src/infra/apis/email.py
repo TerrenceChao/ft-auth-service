@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+from pydantic import EmailStr
 from botocore.exceptions import ClientError
 from ...configs.conf import *
 import logging as log
@@ -11,6 +12,26 @@ log.basicConfig(filemode='w', level=log.INFO)
 class Email:
     def __init__(self):
         self.ses = boto3.client('ses', region_name=LOCAL_REGION)
+
+    async def send_contact(self, recipient: EmailStr, subject: str, body: str) -> None:
+        log.debug(f'send email: {recipient}, subject: {subject}, body: {body}')
+        try:
+            response = self.ses.send_email(
+                Source=EMAIL_SENDER,
+                Destination={
+                    'ToAddresses': [recipient],
+                },
+                Message={
+                    'Subject': {'Data': f'{subject}'},
+                    'Body': {
+                        'Text': {'Data': f'{body}'},
+                    },
+                }
+            )
+            log.info(f"Email sent. Message ID: {response['MessageId']}")
+
+        except ClientError as e:
+            log.error(f"Error sending email: {e}")
 
     async def send_conform_code(self, email: str, confirm_code: str) -> None:
         log.debug(f'send email: {email}, code: {confirm_code}')
