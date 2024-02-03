@@ -111,3 +111,28 @@ def include_app(app: FastAPI):
     app.add_exception_handler(NotAcceptableException, __not_acceptable_exception_handler)
     app.add_exception_handler(DuplicateUserException, __duplicate_user_exception_handler)
     app.add_exception_handler(ServerException, __server_exception_handler)
+
+
+def raise_http_exception(e: Exception, msg: str = None):
+    if isinstance(e, ClientException):
+        raise ClientException(msg=msg or e.msg, data=e.data)
+    
+    if isinstance(e, UnauthorizedException):
+        raise UnauthorizedException(msg=msg or e.msg, data=e.data)
+    
+    if isinstance(e, ForbiddenException):
+        raise ForbiddenException(msg=msg or e.msg, data=e.data)
+        
+    if isinstance(e, NotFoundException):
+        raise NotFoundException(msg=msg or e.msg, data=e.data)
+    
+    if isinstance(e, NotAcceptableException):
+        raise NotAcceptableException(msg=msg or e.msg, data=e.data)
+    
+    if isinstance(e, DuplicateUserException):
+        raise DuplicateUserException(msg=msg or e.msg, data=e.data)
+    
+    if isinstance(e, ServerException):
+        raise ServerException(msg=msg or e.msg, data=e.data)
+    
+    raise ServerException(msg=msg)

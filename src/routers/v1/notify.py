@@ -1,7 +1,7 @@
 from typing import Any, Dict
 from fastapi import APIRouter, \
     Request, Depends, Header, Path, Query, Body
-from ...models.email_value_objects import EmailVO
+from ...models.email_value_objects import EmailAuthVO
 from ..res.response import res_success
 from ...services.email_service import EmailService
 from ...configs.database import get_db
@@ -28,7 +28,7 @@ router = APIRouter(
 
 @router.post('/notify/email')
 async def send_contact_by_email(
-    payload: EmailVO = Body(...),
+    payload: EmailAuthVO = Body(...),
     account_db: Any = Depends(get_db)
 ):
     await _email_service.send_contact(

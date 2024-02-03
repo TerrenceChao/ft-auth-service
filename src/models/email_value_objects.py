@@ -6,3 +6,8 @@ class EmailVO(BaseModel):
     recipient_id: int  # role_id
     subject: str
     body: str
+
+
+class EmailAuthVO(EmailVO):
+    sender_role: str
+    recipient_role: str
