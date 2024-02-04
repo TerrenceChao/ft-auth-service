@@ -3,6 +3,7 @@ import json
 import boto3
 from pydantic import EmailStr
 from botocore.exceptions import ClientError
+from ...configs.exceptions import *
 from ...configs.conf import *
 import logging as log
 
@@ -31,7 +32,12 @@ class Email:
             log.info(f"Email sent. Message ID: {response['MessageId']}")
 
         except ClientError as e:
+            log.error(f"SES ClientError sending email: {e}")
+
+        except Exception as e:
             log.error(f"Error sending email: {e}")
+            raise ServerException(msg='email_send_error')
+
 
     async def send_conform_code(self, email: str, confirm_code: str) -> None:
         log.debug(f'send email: {email}, code: {confirm_code}')
