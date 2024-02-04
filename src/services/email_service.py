@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import EmailStr
 from ..repositories.auth_repository import IAuthRepository
 from ..models.auth_value_objects import AccountVO
 from ..models.email_value_objects import EmailAuthVO
@@ -23,6 +24,23 @@ class EmailService:
 
         return AccountVO.parse_obj(res)
 
+    def __get_recipient_email(
+        self,
+        account_db: Any,
+        payload: EmailAuthVO
+    ) -> (EmailStr):
+        if payload.recipient_email != None and payload.recipient_email != '':
+            return payload.recipient_email
+
+        recipient = self.__find_account(
+            account_db=account_db,
+            role_id=payload.recipient_id,
+        )
+        if recipient.role != payload.recipient_role:
+            raise ForbiddenException(msg='recipient_role_mismatch')
+
+        return recipient.email
+
     '''
     - get sender's email(registration email) by sender_id
     - get recipient's email by recipient_id
@@ -42,15 +60,10 @@ class EmailService:
             if sender.role != payload.sender_role:
                 raise ForbiddenException(msg='sender_role_mismatch')
 
-            recipient = self.__find_account(
-                account_db=account_db,
-                role_id=payload.recipient_id,
-            )
-            if recipient.role != payload.recipient_role:
-                raise ForbiddenException(msg='recipient_role_mismatch')
+            recipient_email = self.__get_recipient_email(account_db, payload)
 
             await self.email.send_contact(
-                recipient=recipient.email,
+                recipient=recipient_email,
                 subject=payload.subject,
                 body=f'{payload.body}\n\nfrom: {sender.email}',
             )
