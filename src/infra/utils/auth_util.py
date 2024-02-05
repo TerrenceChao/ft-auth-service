@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import secrets
 import time
 from pydantic import BaseModel
 from datetime import date, datetime
@@ -66,6 +67,12 @@ def gen_password_hash(pw: str, pass_salt: str):
     return hashlib.sha224(password_data).hexdigest()
 
 
+alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+def generate_refresh_token(length: int = 32) -> (str):
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
 def gen_account_data(data: dict, account_type: AccountType) -> Tuple[FTAuth, Account]:
     aid = gen_snowflake_id()
     role_id = gen_snowflake_id()
@@ -89,7 +96,8 @@ def gen_account_data(data: dict, account_type: AccountType) -> Tuple[FTAuth, Acc
         region=data['region'],
         role=data['role'],
         role_id=role_id,
-        account_type=account_type
+        account_type=account_type,
+        refresh_token=generate_refresh_token(),
     )
 
     return (ft_auth, account)

@@ -26,6 +26,8 @@ class Account(BaseEntity):
     role: str
     role_id: Optional[int] = None
     account_type: AccountType
+    # save 'refresh_token' in acount_indexs instead of accounts
+    refresh_token: Optional[str] = None
 
 
 

@@ -7,3 +7,4 @@ class AccountVO(BaseModel):
     role: str
     role_id: int
     created_at: int
+    refresh_token: str

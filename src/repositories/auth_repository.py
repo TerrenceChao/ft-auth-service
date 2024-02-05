@@ -25,6 +25,10 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
+    def find_account_index_by_role_id(self, db: Any, role_id: Decimal) -> (Dict):
+        pass
+
+    @abstractmethod
     def find_account(self, db: Any, aid: Decimal):
         pass
     

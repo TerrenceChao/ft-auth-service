@@ -1,7 +1,6 @@
 from typing import Any, Union, Callable, Optional
 from pydantic import EmailStr
 from decimal import Decimal
-import hashlib
 import uuid
 
 from src.configs.constants import AccountType

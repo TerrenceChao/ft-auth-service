@@ -119,6 +119,7 @@ class AuthRepository(IAuthRepository):
                             'Item': {
                                 'role_id': account.role_id,
                                 'aid': account.aid,
+                                'refresh_token': account.refresh_token,
                             },
                             'ConditionExpression': 'attribute_not_exists(role_id) AND attribute_not_exists(aid)',
                         }
@@ -126,6 +127,9 @@ class AuthRepository(IAuthRepository):
                 ]
             )
             if response_success(response):
+                account_dict.update({
+                    'refresh_token': account.refresh_token,
+                })
                 return account_dict
             
             raise Exception('insert_req_error')
@@ -179,14 +183,22 @@ class AuthRepository(IAuthRepository):
         except ClientError as e:
             log.error(f'{self.__cls_name}.delete_account error [delete_req_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
-                deleted, email, auth_res, response, client_err_msg(e))
+                deleted, auth.email, auth_res, response, client_err_msg(e))
             raise Exception('delete_req_error')
 
         except Exception as e:
             log.error(f'{self.__cls_name}.delete_account error [db_delete_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
-                deleted, email, auth_res, response, e.__str__())
+                deleted, auth.email, auth_res, response, e.__str__())
             raise Exception('db_delete_error')        
+
+    def find_account_index_by_role_id(self, db: Any, role_id: Decimal) -> (Dict):
+        idx_table = db.Table(TABLE_ACCOUNT_INDEX)
+        idx_res = idx_table.get_item(Key={'role_id': role_id})
+        if idx_res.get('Item', None) == None:
+            raise Exception(f'role_id_not_found: {role_id}')
+
+        return idx_res['Item']
 
 
     def find_account(self, db: Any, aid: Decimal):
@@ -200,7 +212,9 @@ class AuthRepository(IAuthRepository):
             res = table.get_item(Key={'aid': aid})
             if 'Item' in res:
                 result = res['Item']
-            
+                account_index = self.find_account_index_by_role_id(db, result['role_id'])
+                result.update(account_index)
+
             return result
 
         except ClientError as e:
