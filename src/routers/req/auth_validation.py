@@ -1,5 +1,5 @@
 import json
-from pydantic import BaseModel, validator, constr
+from pydantic import BaseModel, validator
 from typing import Optional
 from decimal import Decimal
 from pydantic import EmailStr
@@ -15,8 +15,14 @@ log.basicConfig(filemode='w', level=log.INFO)
 class ResetPasswordPayload(BaseModel):
     register_email: EmailStr
     origin_password: Optional[str] = None
-    password1: constr(min_length=MIN_PASSWORD_LENGTH)
-    password2: constr(min_length=MIN_PASSWORD_LENGTH)
+    password1: str
+    password2: str
+
+    @validator('password1')
+    def password_length(cls, v):
+        if len(v) < MIN_PASSWORD_LENGTH:
+            raise ClientException(msg=f'password length should be at least {MIN_PASSWORD_LENGTH}')
+        return v
 
     @validator('password2')
     def passwords_match(cls, v, values, **kwargs):
