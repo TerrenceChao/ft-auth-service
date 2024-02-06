@@ -5,6 +5,7 @@ from decimal import Decimal
 from pydantic import EmailStr
 from fastapi import Body
 from ...configs.constants import VALID_ROLES, HERE_WE_ARE
+from ...configs.conf import MIN_PASSWORD_LENGTH
 from ...configs.exceptions import *
 import logging as log
 
@@ -16,6 +17,12 @@ class ResetPasswordPayload(BaseModel):
     origin_password: Optional[str] = None
     password1: str
     password2: str
+
+    @validator('password1')
+    def password_length(cls, v):
+        if len(v) < MIN_PASSWORD_LENGTH:
+            raise ClientException(msg=f'password length should be at least {MIN_PASSWORD_LENGTH}')
+        return v
 
     @validator('password2')
     def passwords_match(cls, v, values, **kwargs):
@@ -39,7 +46,10 @@ def decrypt_meta_for_signup(
 
         if not 'pass' in meta_json:
             raise ClientException(msg=f'pass is required')
-        
+
+        if len(meta_json.get('pass', '')) < MIN_PASSWORD_LENGTH:
+            raise ClientException(msg=f'password length should be at least {MIN_PASSWORD_LENGTH}')
+
         meta_json['region'] = HERE_WE_ARE
 
         return meta_json
@@ -62,6 +72,9 @@ def decrypt_meta(
         meta_json = json.loads(meta)
         if not 'pass' in meta_json:
             raise ClientException(msg=f'pass is required')
+
+        if len(meta_json.get('pass', '')) < MIN_PASSWORD_LENGTH:
+            raise ClientException(msg=f'password length should be at least {MIN_PASSWORD_LENGTH}')
 
         return meta_json
 
