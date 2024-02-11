@@ -116,10 +116,10 @@ def update_password(
 
 
 @router.get('/password/reset/email')
-def send_reset_password_confirm_email(
+async def send_reset_password_confirm_email(
     email: EmailStr,
     auth_db: Any = Depends(get_db),
     account_db: Any = Depends(get_db),
 ):
-    verify_token = auth_service.send_reset_password_confirm_email(auth_db, account_db, email)
+    verify_token = await auth_service.send_reset_password_confirm_email(auth_db, account_db, email)
     return res_success(msg='password modified', data={'token': verify_token})
