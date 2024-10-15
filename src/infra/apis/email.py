@@ -33,10 +33,11 @@ class Email:
 
         except ClientError as e:
             log.error(f"SES ClientError sending email: {e}")
+            raise ServerException(msg='email_send_contact_error')
 
         except Exception as e:
             log.error(f"Error sending email: {e}")
-            raise ServerException(msg='email_send_error')
+            raise ServerException(msg='email_send_contact_error')
 
 
     async def send_conform_code(self, email: str, confirm_code: str) -> None:
@@ -105,6 +106,11 @@ class Email:
 
         except ClientError as e:
             log.error(f"Error sending email: {e}")
+            raise ServerException(msg='email_send_conform_code_error')
+
+        except Exception as e:
+            log.error(f'Error sending email: {e}')
+            raise ServerException(msg='email_send_conform_code_error')
 
 
     async def send_reset_password_comfirm_email(self, email: str, token: str) -> None:
@@ -158,3 +164,8 @@ class Email:
 
         except ClientError as e:
             log.error(f"Error sending email: {e}") 
+            raise ServerException(msg='email_send_reset_password_error')
+
+        except Exception as e:
+            log.error(f'Error sending email: {e}')
+            raise ServerException(msg='email_send_reset_password_error')

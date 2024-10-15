@@ -48,18 +48,25 @@ class AuthService:
             raise NotFoundException(msg='incomplete_registered_user_information')
                       
 
-        sendby = str(sendby).lower()
-        if res is None:
-            if sendby == 'no_exist':
-                await self.email.send_conform_code(email=email, confirm_code=confirm_code)
-                return 'email_sent'
-            raise NotFoundException(msg='email_not_found')
+        try:
+            sendby = str(sendby).lower()
+            if res is None:
+                if sendby == 'no_exist':
+                    await self.email.send_conform_code(email=email, confirm_code=confirm_code)
+                    return 'email_sent'
+                raise NotFoundException(msg='email_not_found')
 
-        else:
-            if sendby == 'registered':
-                await self.email.send_conform_code(email=email, confirm_code=confirm_code)
-                return 'email_sent'
-            raise DuplicateUserException(msg='email_registered')
+            else:
+                if sendby == 'registered':
+                    await self.email.send_conform_code(email=email, confirm_code=confirm_code)
+                    return 'email_sent'
+                raise DuplicateUserException(msg='email_registered')
+        
+        except Exception as e:
+            log.error(f'{self.__cls_name}.send_code_by_email [email sending error] \
+                email:%s, confirm_code:%s, sendby:%s, res:%s, err:%s',
+                email, confirm_code, sendby, res, e.__str__())
+            raise_http_exception(e=e, msg=e.msg if e.msg else 'unknow_error')
 
     '''
     註冊流程
