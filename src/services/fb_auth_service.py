@@ -6,14 +6,14 @@ from src.models.sso_api import RedirectUrl
 from src.configs.constants import AccountType
 from fastapi.responses import RedirectResponse
 from ..models.auth_value_objects import AccountVO
-from ..infra.client.email import Email
+from ..infra.client.email import EmailClient
 from ..configs.exceptions import *
 import logging as log
 
 from typing import Any
 
 class FBAuthService(SSOAuthService):
-    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email, fb: FBLoginRepository):
+    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: EmailClient, fb: FBLoginRepository):
         super().__init__(auth_repo, obj_storage, email)
         self.fb = fb
     
