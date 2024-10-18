@@ -1,21 +1,16 @@
-import os
-import json
-
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any
 from decimal import Decimal
-from pydantic import EmailStr, BaseModel
-import datetime
+from pydantic import EmailStr
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 from .schemas import *
+from .ddb_error_handler import *
 from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, TABLE_ACCOUNT_INDEX, BATCH_LIMIT
 from ....configs.constants import DYNAMODB_KEYWORDS
-from ....configs.database import client_err_msg, response_success
 from ....configs.exceptions import *
 from ....repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 import logging as log
-from src.infra.utils import auth_util 
 
 log.basicConfig(filemode='w', level=log.INFO)
 
