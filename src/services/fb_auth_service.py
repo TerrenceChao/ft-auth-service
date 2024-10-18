@@ -17,13 +17,13 @@ class FBAuthService(SSOAuthService):
         super().__init__(auth_repo, obj_storage, email)
         self.fb = fb
     
-    def register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any) -> AccountVO:
-        oauth_data = self.fb.oauth(code)
+    async def register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any) -> AccountVO:
+        oauth_data = await self.fb.oauth(code)
         if not oauth_data or not oauth_data.access_token:
             return f'there is no accesstoken \n {oauth_data}'
-        user_info = self.fb.get_user_info(access_token=oauth_data.access_token)
+        user_info = await self.fb.get_user_info(access_token=oauth_data.access_token)
         general_user_info = self.fb.fb_user_info_to_general(user_info)
-        return self._register_or_login(general_user_info, state, AccountType.FB, auth_db, account_db)
+        return await self._register_or_login(general_user_info, state, AccountType.FB, auth_db, account_db)
     
     def dialog(self, role: str, region: str) -> RedirectUrl:
         state_payload = self._make_state_payload_json(role, region)

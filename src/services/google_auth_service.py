@@ -23,11 +23,11 @@ class GoogleAuthService(SSOAuthService):
         state_payload = self._make_state_payload_json(role, region)
         return self.google.auth(state_payload)
 
-    def register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any):
-        oauth_data = self.google.token(code)
+    async def register_or_login(self, code: str, state: str, auth_db: Any, account_db: Any):
+        oauth_data = await self.google.token(code)
         if not oauth_data or not oauth_data.id_token:
             return f'there is no accesstoken \n {oauth_data}'
-        user_info = self.google.user_info(oauth_data.id_token)
+        user_info = await self.google.user_info(oauth_data.id_token)
         general_user_info = self.google.google_user_info_to_general(user_info)
-        return self._register_or_login(general_user_info, state, AccountType.GOOGLE, auth_db, account_db)
+        return await self._register_or_login(general_user_info, state, AccountType.GOOGLE, auth_db, account_db)
 

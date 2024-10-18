@@ -5,6 +5,7 @@ from .handlers._resource import ResourceHandler
 from .handlers.storage_resource import S3ResourceHandler
 from .handlers.db_resource import DynamoDBResourceHandler
 from .handlers.email_resource import SESClientHandler
+from .handlers.http_resource import HttpResourceHandler
 from ...configs.conf import PROBE_CYCLE_SECS
 import logging
 
@@ -20,6 +21,7 @@ class GlobalResourceManager:
             'storage': S3ResourceHandler(session),
             'dynamodb': DynamoDBResourceHandler(session),
             'email': SESClientHandler(session),
+            'http': HttpResourceHandler(),
         }
 
     def get(self, resource: str) -> ResourceHandler:

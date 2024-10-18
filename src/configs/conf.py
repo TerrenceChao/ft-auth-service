@@ -28,6 +28,12 @@ S3_CONNECT_TIMEOUT=int(os.getenv("S3_CONNECT_TIMEOUT", 10))
 S3_READ_TIMEOUT=int(os.getenv("S3_READ_TIMEOUT", 10))
 S3_MAX_ATTEMPTS=int(os.getenv("S3_MAX_ATTEMPTS", 3))
 
+# connection
+# http
+HTTP_TIMEOUT = float(os.getenv("TIMEOUT", 10.0))
+HTTP_MAX_CONNECTS = int(os.getenv("MAX_CONNECTS", 20))
+HTTP_MAX_KEEPALIVE_CONNECTS = int(os.getenv("MAX_KEEPALIVE_CONNECTS", 10))
+HTTP_KEEPALIVE_EXPIRY = float(os.getenv("KEEPALIVE_EXPIRY", 30.0))
 
 # FB App conf
 FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID', '829288179205024')
