@@ -1,10 +1,10 @@
-import requests
 import json
 from typing import List, Optional
 from pydantic import BaseModel
 
 from src.models.sso_api import GeneralUserInfo, RedirectUrl
 from src.infra.utils.url_util import parse_url
+from ..client.request_client_adapter import RequestClientAdapter
 from src.configs.conf import FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, FACEBOOK_REDIRECT_URI
 
 FACEBOOK_APP_VERSION = 'v18.0'
@@ -21,14 +21,15 @@ class OauthResponse(BaseModel):
     expires_in: int
 
 class FBLoginRepository:
-    def __init__(self) -> None:
+    def __init__(self, request: RequestClientAdapter) -> None:
         self.facebook_app_id = FACEBOOK_APP_ID
         self.facebook_app_secret = FACEBOOK_APP_SECRET
         self.facebook_app_version = FACEBOOK_APP_VERSION
         self.facebook_url = f'https://graph.facebook.com/{FACEBOOK_APP_VERSION}'
         self.redircet_uri = FACEBOOK_REDIRECT_URI
+        self.request = request
     
-    def get_user_info(self, access_token: str, fields: Optional[List[str]] = None) -> GetUserInfoResponse:
+    async def get_user_info(self, access_token: str, fields: Optional[List[str]] = None) -> GetUserInfoResponse:
         if not fields:
             fields = ['email', 'id', 'name']
         api_endpoint = f'{FACEBOOK_GRAPH_URL}/me'
@@ -36,8 +37,7 @@ class FBLoginRepository:
             'access_token': access_token,
             'fields': ','.join(fields)
         }
-        resp = requests.get(url=api_endpoint, params=params)
-        data = resp.json()
+        data = await self.request.simple_get(url=api_endpoint, params=params)
 
         try:
             user_info = GetUserInfoResponse.parse_obj(data)
@@ -46,18 +46,17 @@ class FBLoginRepository:
         
         return user_info
 
-    def oauth(self, code) -> OauthResponse:
+    async def oauth(self, code) -> OauthResponse:
         payload = {
                 'client_id': self.facebook_app_id,
                 'client_secret': self.facebook_app_secret,
                 'code': code,
                 'redirect_uri': self.redircet_uri,
             }
-        resp = requests.get(
+        data = await self.request.simple_get(
             f'{FACEBOOK_GRAPH_URL}/oauth/access_token?',
             params=payload,
         )
-        data = resp.json()
 
         try:
             oauth_data = OauthResponse.parse_obj(data)

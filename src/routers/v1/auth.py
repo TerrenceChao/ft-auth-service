@@ -1,15 +1,11 @@
 from typing import Any, Dict
-from fastapi import APIRouter, \
-    Request, Depends, \
-    Cookie, Header, Path, Query, Body, Form, \
-    File, UploadFile, status, \
-    HTTPException
+from fastapi import APIRouter, Depends, Body, status
 from pydantic import EmailStr
 from ..req.auth_validation import decrypt_meta_for_signup, decrypt_meta, ResetPasswordPayload
-from ..res.response import res_success, res_err
+from ..res.response import post_success, res_success
 from ...services.auth_service import AuthService
-from ...configs.database import get_db, get_client
-from ...configs.s3 import get_s3_resource
+from ...configs.adapters import *
+
 from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
 from ...infra.storage.global_object_storage import GlobalObjectStorage
@@ -18,14 +14,13 @@ import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
-auth_repo = AuthRepository()
-global_object_storage = GlobalObjectStorage(s3=get_s3_resource())
-email = Email()
+
 auth_service = AuthService(
-    auth_repo=auth_repo,
-    obj_storage=global_object_storage,
-    email=email,
+    auth_repo=AuthRepository(),
+    obj_storage=GlobalObjectStorage(storage_resource),
+    email=Email(email_client),
 )
+
 
 router = APIRouter(
     prefix='/auth-nosql',
@@ -53,8 +48,8 @@ async def send_conform_code_by_email(
     email: EmailStr = Body(...),
     confirm_code: str = Body(...),
     sendby: str = Body(...),
-    auth_db: Any = Depends(get_db),
-    account_db: Any = Depends(get_db)
+    # auth_db: Any = Depends(get_db),
+    # account_db: Any = Depends(get_db)
 ):
     res = await auth_service.send_conform_code_by_email(
         email=email,
@@ -64,37 +59,37 @@ async def send_conform_code_by_email(
         account_db=account_db
     )
 
-    return res_success(data=res)
+    return post_success(data=res)
 
 
 @router.post('/signup', status_code=status.HTTP_201_CREATED)
-def signup(
+async def signup(
     email: EmailStr = Body(...),
     # meta ex: "{\"role\":\"teacher\",\"pass\":\"secret\"}"
     data: Dict = Depends(decrypt_meta_for_signup),
-    auth_db: Any = Depends(get_db),
-    account_db: Any = Depends(get_db),
+    # auth_db: Any = Depends(get_db),
+    # account_db: Any = Depends(get_db),
 ):
-    res = auth_service.signup(
+    res = await auth_service.signup(
         email=email,
         data=data,
         auth_db=auth_db,
         account_db=account_db,
     )
 
-    return res_success(data=res)
+    return post_success(data=res)
 
 
 @router.post('/login')
-def login(
+async def login(
     email: EmailStr = Body(...),
     # meta ex: "{\"pass\":\"secret\"}"
     data: Dict = Depends(decrypt_meta),
     current_region: str = Body(...),
-    auth_db: Any = Depends(get_db),
-    account_db: Any = Depends(get_db),
+    # auth_db: Any = Depends(get_db),
+    # account_db: Any = Depends(get_db),
 ):
-    res = auth_service.login(
+    res = await auth_service.login(
         email=email,
         data=data,
         current_region=current_region,
@@ -102,24 +97,28 @@ def login(
         account_db=account_db,
     )
 
-    return res_success(data=res)
+    return post_success(data=res)
 
 
 @router.put('/password/update')
-def update_password(
+async def update_password(
     payload: ResetPasswordPayload,
-    auth_db: Any = Depends(get_db),
+    # auth_db: Any = Depends(get_db),
 ):
-    auth_service.update_password(
-        auth_db, payload.register_email, payload.password1, payload.origin_password)
+    await auth_service.update_password(
+        auth_db, 
+        payload.register_email, 
+        payload.password1, 
+        payload.origin_password
+    )
     return res_success(msg='password modified')
 
 
 @router.get('/password/reset/email')
 async def send_reset_password_confirm_email(
     email: EmailStr,
-    auth_db: Any = Depends(get_db),
-    account_db: Any = Depends(get_db),
+    # auth_db: Any = Depends(get_db),
+    # account_db: Any = Depends(get_db),
 ):
     verify_token = await auth_service.send_reset_password_confirm_email(auth_db, account_db, email)
     return res_success(msg='password modified', data={'token': verify_token})

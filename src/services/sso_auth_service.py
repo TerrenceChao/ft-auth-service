@@ -32,7 +32,7 @@ class SSOAuthService(AuthService):
         self.__cls_name = self.__class__.__name__
 
    
-    def _register_or_login(
+    async def _register_or_login(
         self,
         user_info: GeneralUserInfo,
         state: str,
@@ -41,12 +41,12 @@ class SSOAuthService(AuthService):
         account_db: Any,
     ) -> AccountVO:
         state_payload = self._parse_state(state)
-        version = self.__check_if_email_is_registered(email=user_info.email)
+        version = await self.__check_if_email_is_registered(email=user_info.email)
  
         if not version:
-            return self.__login(state_payload, user_info, auth_db, account_db)
+            return await self.__login(state_payload, user_info, auth_db, account_db)
         else:
-            return self.__register(
+            return await self.__register(
                 state_payload,
                 user_info,
                 account_type,
@@ -59,31 +59,31 @@ class SSOAuthService(AuthService):
     檢查 email 有沒註冊過
         去 S3 檢查 email 有沒註冊過，若沒有 則先寫入 email + version
     """
-    def __check_if_email_is_registered(self, email: EmailStr) -> Optional[str]:
+    async def __check_if_email_is_registered(self, email: EmailStr) -> Optional[str]:
         # Is the email registered with S3?
-        email_info = self.obj_storage.find(bucket=email)
+        email_info = await self.obj_storage.find(bucket=email)
         if email_info is not None:
             return ""
 
         # save email and version into S3 if it's not registered
         version = auth_util.gen_random_string(10)
-        version = self.obj_storage.init(bucket=email, version=version)
+        version = await self.obj_storage.init(bucket=email, version=version)
         return version  # all good!
 
-    def __login(      
+    async def __login(      
         self,  
         state_payload: StatePayload,
         user_info: GetUserInfoResponse,
         auth_db: Any,
         account_db: Any,
     ) -> AccountVO:
-        auth = self.__validation(user_info.email, user_info.id, state_payload.region, auth_db)
+        auth = await self.__validation(user_info.email, user_info.id, state_payload.region, auth_db)
 
         aid = auth['aid']
-        account_vo = self.find_account(aid, account_db)
+        account_vo = await self.find_account(aid, account_db)
         return account_vo
 
-    def __register(
+    async def __register(
         self,
         state_payload: StatePayload,
         user_info: GetUserInfoResponse,
@@ -92,10 +92,10 @@ class SSOAuthService(AuthService):
         auth_db: Any,
         account_db: Any,
     ) -> AccountVO:
-        auth, account = self.__generate_account_data(
+        auth, account = await self.__generate_account_data(
             state_payload, user_info, account_type, version
         )
-        return self.save_account_data(auth, account, auth_db, account_db)
+        return await self.save_account_data(auth, account, auth_db, account_db)
 
     """
     產生帳戶資料
@@ -103,7 +103,7 @@ class SSOAuthService(AuthService):
             檢查 version, 將 email + register_region 覆寫至 S3
         2. 產生 DynamoDB 需要的帳戶資料
     """
-    def __generate_account_data(
+    async def __generate_account_data(
         self,
         state_payload: StatePayload,
         user_info: GeneralUserInfo,
@@ -117,7 +117,7 @@ class SSOAuthService(AuthService):
             email=user_info.email,
             sso_id=user_info.id,
         )
-        self.obj_storage.update(
+        await self.obj_storage.update(
             bucket=pre_account_data.email,
             version=version,
             newdata={"region": pre_account_data.region},
@@ -130,7 +130,7 @@ class SSOAuthService(AuthService):
         return (auth, account)  # all good!
  
 
-    def _parse_state(self, state: str) -> StatePayload:
+    async def _parse_state(self, state: str) -> StatePayload:
         return StatePayload.parse_obj(json.loads(state))
 
     def _make_state_payload_json(self, role: str, region: str) -> str:
@@ -147,7 +147,7 @@ class SSOAuthService(AuthService):
         3. validation sso_id
         4. return auth
     '''
-    def __validation(
+    async def __validation(
         self,
         email: EmailStr,
         sso_id: str,
@@ -155,11 +155,11 @@ class SSOAuthService(AuthService):
         auth_db: Any,
     ) -> Any:
         # 1. 從 DynamoDB (auth) 取得 auth
-        auth = self.auth_repo.find_auth(db=auth_db, email=email)
+        auth = await self.auth_repo.find_auth(db=auth_db, email=email)
         
         # 2. not found 錯誤處理
         if auth is None:
-            email_info = self.obj_storage.find(bucket=email)
+            email_info = await self.obj_storage.find(bucket=email)
             if email_info is None:
                 raise NotFoundException(msg='user_not_found')
 

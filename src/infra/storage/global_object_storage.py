@@ -1,6 +1,7 @@
 import io
 import json
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError, ClientError
+from ..resources.handlers.storage_resource import S3ResourceHandler
 from ...configs.conf import FT_BUCKET
 from ...configs.exceptions import *
 import logging as log
@@ -9,18 +10,19 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class GlobalObjectStorage:
-    def __init__(self, s3):
+    def __init__(self, s3: S3ResourceHandler):
         self.s3 = s3
         self.__cls_name = self.__class__.__name__
 
-    def init(self, bucket, version):
+    async def init(self, bucket, version):
         file = None
         key = None
         try:
             file = json.dumps({'version': version})
             key = ''.join([str(bucket), '/email_info.json'])
-            obj = self.s3.Object(FT_BUCKET, key)
-            obj.put(Body=file)
+            storage = await self.s3.access()
+            obj = await storage.Object(FT_BUCKET, key)
+            await obj.put(Body=file)
 
             return version
 
@@ -31,12 +33,12 @@ class GlobalObjectStorage:
             raise ServerException(msg='init file fail')
 
 
-    def update(self, bucket, version, newdata):
+    async def update(self, bucket, version, newdata):
         data = None
         result = None
         key = None
         try:
-            data = self.find(bucket)
+            data = await self.find(bucket)
             if data is None:
                 raise NotFoundException(msg=f'file:{bucket} not found')
             
@@ -47,8 +49,9 @@ class GlobalObjectStorage:
             result = json.dumps(data)
 
             key = ''.join([str(bucket), '/email_info.json'])
-            obj = self.s3.Object(FT_BUCKET, key)
-            obj.put(Body=result)
+            storage = await self.s3.access()
+            obj = await storage.Object(FT_BUCKET, key)
+            await obj.put(Body=result)
             return result
         
         except NotFoundException as e:
@@ -64,12 +67,14 @@ class GlobalObjectStorage:
             raise ServerException(msg='update file fail')
 
 
-    def delete(self, bucket):
+    async def delete(self, bucket):
         key = None
         result = False
         try:
             key = ''.join([str(bucket), '/email_info.json'])
-            self.s3.Object(FT_BUCKET, key).delete()
+            storage = await self.s3.access()
+            obj = await storage.Object(FT_BUCKET, key)
+            await obj.delete()
             result = True
             return result
 
@@ -87,15 +92,16 @@ class GlobalObjectStorage:
         }, None
     '''
 
-    def find(self, bucket):
+    async def find(self, bucket):
         key = None
         result = None
         try:
             key = ''.join([str(bucket), '/email_info.json'])
-            obj = self.s3.Object(FT_BUCKET, key)
+            storage = await self.s3.access()
+            obj = await storage.Object(FT_BUCKET, key)
 
             file_stream = io.BytesIO()
-            obj.download_fileobj(file_stream)
+            await obj.download_fileobj(file_stream)
             file_stream.seek(0)
             string = file_stream.read().decode('utf-8')
             result = json.loads(string)
