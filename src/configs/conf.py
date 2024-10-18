@@ -1,5 +1,9 @@
 import os
 
+# stage
+TESTING = os.getenv("TESTING", "dev")
+STAGE = os.getenv("STAGE", "dev")
+
 LOCAL_REGION = os.getenv("LOCAL_REGION", "ap-northeast-1")
 MIN_PASSWORD_LENGTH = int(os.getenv("MIN_PASSWORD_LENGTH", 6))
 
@@ -10,8 +14,6 @@ PROBE_CYCLE_SECS = int(os.getenv("PROBE_CYCLE_SECS", 3))
 TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 60 * 60 * 24 * 30))
 
 # db conf
-LOCAL_DB = 'http://localhost:8000'
-DYNAMODB_URL = os.getenv('DYNAMODB_URL', None)
 DDB_CONNECT_TIMEOUT=int(os.getenv("DDB_CONNECT_TIMEOUT", 120))
 DDB_READ_TIMEOUT=int(os.getenv("DDB_READ_TIMEOUT", 30))
 DDB_MAX_ATTEMPTS=int(os.getenv("DDB_MAX_ATTEMPTS", 5))

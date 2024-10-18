@@ -12,6 +12,7 @@ from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.client.email import EmailClient
 from ..configs.exceptions import *
+from ..configs.conf import (TESTING, STAGE)
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -41,24 +42,26 @@ class AuthService:
                 email=email,
                 fields=['email', 'region', 'role']
             )
-        except NotFoundError as e:
+
+        except ServerError as e:
             log.error(f'{self.__cls_name}.send_conform_code_by_email [lack with account_data] \
                 email:%s, confirm_code:%s, sendby:%s, res:%s, err:%s',
                 email, confirm_code, sendby, res, e.__str__())
-            raise NotFoundException(msg='incomplete_registered_user_information')
-                      
+            raise ServerException(msg='incomplete_registered_user_information')
 
         try:
             sendby = str(sendby).lower()
             if res is None:
                 if sendby == 'no_exist':
-                    await self.email.send_conform_code(email=email, confirm_code=confirm_code)
+                    if STAGE != TESTING:    # don't send email in DEV stage
+                        await self.email.send_conform_code(email=email, confirm_code=confirm_code)
                     return 'email_sent'
                 raise NotFoundException(msg='email_not_found')
 
             else:
                 if sendby == 'registered':
-                    await self.email.send_conform_code(email=email, confirm_code=confirm_code)
+                    if STAGE != TESTING:    # don't send email in DEV stage
+                        await self.email.send_conform_code(email=email, confirm_code=confirm_code)
                     return 'email_sent'
                 raise DuplicateUserException(msg='email_registered')
         
@@ -67,6 +70,7 @@ class AuthService:
                 email:%s, confirm_code:%s, sendby:%s, res:%s, err:%s',
                 email, confirm_code, sendby, res, e.__str__())
             raise_http_exception(e=e, msg=e.msg if e.msg else 'unknow_error')
+
 
     '''
     註冊流程

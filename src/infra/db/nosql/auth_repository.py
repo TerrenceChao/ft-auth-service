@@ -57,7 +57,7 @@ class AuthRepository(IAuthRepository):
                 )
 
             if not 'Item' in acc_res:
-                raise NotFoundError('there_is_auth_data_but_no_account_data')
+                raise ServerError('there_is_auth_data_but_no_account_data')
                 
             return acc_res['Item']
         
@@ -67,7 +67,7 @@ class AuthRepository(IAuthRepository):
                 email, fields, auth_res, acc_res, account, client_err_msg(e))
             raise Exception('read_req_error')
         
-        except NotFoundError as e:
+        except ServerError as e:
             log.error(f'{self.__cls_name}.get_account_by_email error [there_is_auth_data_but_no_account_data], \
                 email:%s fields:%s, auth_res:%s, acc_res:%s, account:%s, err:%s', 
                 email, fields, auth_res, acc_res, account,  e.__str__())
