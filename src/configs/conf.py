@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 TESTING = os.getenv("TESTING", "dev")
 STAGE = os.getenv("STAGE", "dev")
 
-LOCAL_REGION = os.getenv("LOCAL_REGION", "ap-northeast-1")
+LOCAL_REGION = os.getenv("AWS_REGION", "ap-northeast-1")
 MIN_PASSWORD_LENGTH = int(os.getenv("MIN_PASSWORD_LENGTH", 6))
 
 # probe cycle secs
