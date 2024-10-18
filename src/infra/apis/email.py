@@ -2,14 +2,14 @@ from pydantic import EmailStr
 from botocore.exceptions import ClientError
 from ...configs.exceptions import *
 from ...configs.conf import *
-from ...infra.resources.handlers.email_resource import SESClientHandler
+from ...infra.resources.handlers.email_resource import SESResourceHandler
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
 
 class Email:
-    def __init__(self, ses: SESClientHandler):
+    def __init__(self, ses: SESResourceHandler):
         self.ses = ses
 
     async def send_contact(self, recipient: EmailStr, subject: str, body: str) -> None:

@@ -20,7 +20,7 @@ ses_config = Config(
 )
 
 
-class SESClientHandler(ResourceHandler):
+class SESResourceHandler(ResourceHandler):
 
     def __init__(self, session: aioboto3.Session):
         super().__init__()
