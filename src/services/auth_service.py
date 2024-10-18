@@ -10,7 +10,7 @@ from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
 from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
-from ..infra.client.email import Email
+from ..infra.client.email import EmailClient
 from ..configs.exceptions import *
 import logging as log
 
@@ -18,7 +18,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class AuthService:
-    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email):
+    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: EmailClient):
         self.auth_repo = auth_repo
         self.obj_storage = obj_storage
         self.email = email

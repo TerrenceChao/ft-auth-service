@@ -8,14 +8,14 @@ from fastapi.responses import RedirectResponse
 from ..models.auth_value_objects import AccountVO
 from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
-from ..infra.client.email import Email
+from ..infra.client.email import EmailClient
 from ..configs.exceptions import *
 import logging as log
 
 from typing import Any
 
 class GoogleAuthService(SSOAuthService):
-    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email, google: GoogleLoginRepository):
+    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: EmailClient, google: GoogleLoginRepository):
         super().__init__(auth_repo, obj_storage, email)
         self.google = google
     

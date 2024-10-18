@@ -11,7 +11,7 @@ from ..repositories.auth_repository import IAuthRepository
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
 from ..infra.utils import auth_util
-from ..infra.client.email import Email
+from ..infra.client.email import EmailClient
 from ..configs.exceptions import *
 import logging as log
 
@@ -27,7 +27,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class SSOAuthService(AuthService):
-    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: Email):
+    def __init__(self, auth_repo: IAuthRepository, obj_storage: IObjectStorage, email: EmailClient):
         super().__init__(auth_repo, obj_storage, email)
         self.__cls_name = self.__class__.__name__
 

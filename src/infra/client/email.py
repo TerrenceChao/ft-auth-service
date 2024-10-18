@@ -8,7 +8,7 @@ import logging as log
 log.basicConfig(filemode='w', level=log.INFO)
 
 
-class Email:
+class EmailClient:
     def __init__(self, ses: SESResourceHandler):
         self.ses = ses
 
@@ -28,7 +28,7 @@ class Email:
                     },
                 }
             )
-            log.info(f"Email sent. Message ID: {response['MessageId']}")
+            log.info(f"EmailClient sent. Message ID: {response['MessageId']}")
 
         except ClientError as e:
             log.error(f"SES ClientError sending email: {e}")
@@ -102,7 +102,7 @@ class Email:
             #     Template=EMAIL_VERIFY_CODE_TEMPLATE,
             #     TemplateData=f'{"verification_code":"{confirm_code}"}'
             # )
-            log.info(f"Email sent. Message ID: {response['MessageId']}")
+            log.info(f"EmailClient sent. Message ID: {response['MessageId']}")
 
         except ClientError as e:
             log.error(f"Error sending email: {e}")
@@ -161,7 +161,7 @@ class Email:
             #     Template=EMAIL_RESET_PASSWORD_TEMPLATE,
             #     TemplateData=f'{"reset_password_url":"{FRONTEND_RESET_PASSWORD_URL}","token":"{token}"}'
             # )
-            log.info(f"Email sent. Message ID: {response['MessageId']}")
+            log.info(f"EmailClient sent. Message ID: {response['MessageId']}")
 
         except ClientError as e:
             log.error(f"Error sending email: {e}") 
