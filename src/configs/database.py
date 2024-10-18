@@ -51,3 +51,5 @@ def response_success(res):
 
     log.error(res)
     return False
+
+# TODO: the file will be deprecated

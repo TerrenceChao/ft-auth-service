@@ -24,34 +24,38 @@ log.basicConfig(filemode='w', level=log.INFO)
 class AuthRepository(IAuthRepository):
     def __init__(self):
         self.__cls_name = self.__class__.__name__
+        self.auth_db = None
+        self.account_db = None
 
-    def get_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr, fields: List):
+    async def get_account_by_email(self, auth_db: Any, account_db: Any, email: EmailStr, fields: List):
         auth_res = None
         acc_res = None
         account = None
 
         try:
             # 1. get auth
-            auth_table = auth_db.Table(TABLE_AUTH)
+            auth_db = await auth_db.access()
+            auth_table = await auth_db.Table(TABLE_AUTH)
             # log.info(auth_table)
-            auth_res = auth_table.get_item(Key={'email': email})
+            auth_res = await auth_table.get_item(Key={'email': email})
             if not 'Item' in auth_res:
                 return None
 
             # 2. get account by aid
             aid = auth_res['Item']['aid']
-            acc_table = account_db.Table(TABLE_ACCOUNT)
+            account_db = await account_db.access()
+            acc_table = await account_db.Table(TABLE_ACCOUNT)
             # log.info(acc_table)
             
             projection_expression, expression_attr_names = \
                 self.__gen_expression_for_get_items(fields)
             if expression_attr_names == {}:
-                acc_res = acc_table.get_item(
+                acc_res = await acc_table.get_item(
                     Key={'aid': aid},
                     ProjectionExpression=projection_expression,
                 )
             else:
-                acc_res = acc_table.get_item(
+                acc_res = await acc_table.get_item(
                     Key={'aid': aid},
                     ProjectionExpression=projection_expression,
                     ExpressionAttributeNames=expression_attr_names,
@@ -91,13 +95,15 @@ class AuthRepository(IAuthRepository):
         projection_expression = ','.join(fields)
         return projection_expression, expression_attr_names
 
-    def create_account(self, auth_db: Any, account_db: Any, auth: FTAuth, account: Account):
+    async def create_account(self, auth_db: Any, account_db: Any, auth: FTAuth, account: Account):
         response = None
         auth_dict: Dict = auth.create_ts().dict()
         account_dict: Dict = account.create_ts().dict()
 
         try:
-            response = account_db.meta.client.transact_write_items(
+            _db = await account_db.access()
+            client = _db.meta.client
+            response = await client.transact_write_items(
                 TransactItems=[
                     {
                         'Put': {
@@ -143,13 +149,15 @@ class AuthRepository(IAuthRepository):
             raise Exception('db_insert_error')
 
 
-    def delete_account(self, auth_db: Any, account_db: Any, auth: FTAuth):
+    async def delete_account(self, auth_db: Any, account_db: Any, auth: FTAuth):
         auth_res = None
         response = None
         deleted = False
 
         try:
-            response = account_db.meta.client.transact_write_items(
+            _db = await account_db.access()
+            client = _db.meta.client
+            response = await client.transact_write_items(
                 TransactItems=[
                     {
                         'Delete': {
@@ -179,25 +187,26 @@ class AuthRepository(IAuthRepository):
         except ClientError as e:
             log.error(f'{self.__cls_name}.delete_account error [delete_req_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
-                deleted, email, auth_res, response, client_err_msg(e))
+                deleted, auth.email, auth_res, response, client_err_msg(e))
             raise Exception('delete_req_error')
 
         except Exception as e:
             log.error(f'{self.__cls_name}.delete_account error [db_delete_error], \
                 deleted:%s, email:%s, auth_res:%s, response:%s, err:%s', 
-                deleted, email, auth_res, response, e.__str__())
+                deleted, auth.email, auth_res, response, e.__str__())
             raise Exception('db_delete_error')        
 
 
-    def find_account(self, db: Any, aid: Decimal):
+    async def find_account(self, db: Any, aid: Decimal):
         res = None
         result = None
         
         try:
             # 1. find account by aid
-            table = db.Table(TABLE_ACCOUNT)
+            db = await db.access()
+            table = await db.Table(TABLE_ACCOUNT)
             # log.info(table)
-            res = table.get_item(Key={'aid': aid})
+            res = await table.get_item(Key={'aid': aid})
             if 'Item' in res:
                 result = res['Item']
             
@@ -216,18 +225,19 @@ class AuthRepository(IAuthRepository):
             raise Exception('db_read_error')
 
 
-    def find_account_by_role_id(self, db: Any, role_id: Decimal):
+    async def find_account_by_role_id(self, db: Any, role_id: Decimal):
         idx_res = None
         res = None
         result = None
         
         try:
-            idx_table = db.Table(TABLE_ACCOUNT_INDEX)
+            db = await db.access()
+            idx_table = await db.Table(TABLE_ACCOUNT_INDEX)
             # log.info(table)
-            idx_res = idx_table.get_item(Key={'role_id': role_id})
+            idx_res = await idx_table.get_item(Key={'role_id': role_id})
             if idx_res.get('Item', None) != None and 'aid' in idx_res['Item']:
                 aid = idx_res['Item']['aid']
-                table = db.Table(TABLE_ACCOUNT)
+                table = await db.Table(TABLE_ACCOUNT)
                 res = table.get_item(Key={'aid': aid})
                 if res.get('Item', None) != None:
                     result = res['Item']
@@ -249,15 +259,16 @@ class AuthRepository(IAuthRepository):
             raise Exception('db_read_error')
 
 
-    def find_auth(self, db: Any, email: EmailStr):
+    async def find_auth(self, db: Any, email: EmailStr):
         res = None
         result = None
 
         try:
             # 1. find auth by email only
-            table = db.Table(TABLE_AUTH)
+            db = await db.access()
+            table = await db.Table(TABLE_AUTH)
             # log.info(table)
-            res = table.get_item(Key={'email': email})
+            res = await table.get_item(Key={'email': email})
             if 'Item' in res:
                 result = res['Item']
             
@@ -276,14 +287,15 @@ class AuthRepository(IAuthRepository):
             raise Exception('db_read_error')
 
 
-    def update_password(
+    async def update_password(
         self, db: Any, update_password_params: UpdatePasswordParams
     ) -> (bool):
         res = None
         try:
-            auth_table = db.Table(TABLE_AUTH)
+            db = await db.access()
+            auth_table = await db.Table(TABLE_AUTH)
 
-            res = auth_table.update_item(
+            res = await auth_table.update_item(
                 Key={'email': update_password_params.email},
                 UpdateExpression='set pass_salt=:ps, pass_hash=:ph',
                 ExpressionAttributeValues={

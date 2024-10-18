@@ -1,23 +1,22 @@
-import os
-import json
-import boto3
 from pydantic import EmailStr
 from botocore.exceptions import ClientError
 from ...configs.exceptions import *
 from ...configs.conf import *
+from ...infra.resources.handlers.email_resource import SESClientHandler
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
 
 
 class Email:
-    def __init__(self):
-        self.ses = boto3.client('ses', region_name=LOCAL_REGION)
+    def __init__(self, ses: SESClientHandler):
+        self.ses = ses
 
     async def send_contact(self, recipient: EmailStr, subject: str, body: str) -> None:
         log.debug(f'send email: {recipient}, subject: {subject}, body: {body}')
         try:
-            response = self.ses.send_email(
+            email_client = await self.ses.access()
+            response = await email_client.send_email(
                 Source=EMAIL_SENDER,
                 Destination={
                     'ToAddresses': [recipient],
@@ -81,7 +80,8 @@ class Email:
                 </body>
                 </html>
             '''
-            response = self.ses.send_email(
+            email_client = await self.ses.access()
+            response = await email_client.send_email(
                 Source=EMAIL_SENDER,
                 Destination={
                     'ToAddresses': [email],
@@ -94,7 +94,7 @@ class Email:
                     },
                 }
             )
-            # response = self.ses.send_templated_email(
+            # response = await self.ses.send_templated_email(
             #     Source=EMAIL_SENDER,
             #     Destination={
             #         'ToAddresses': [email],
@@ -139,7 +139,8 @@ class Email:
                 </body>
                 </html>
             '''
-            response = self.ses.send_email(
+            email_client = await self.ses.access()
+            response = await email_client.send_email(
                 Source=EMAIL_SENDER,
                 Destination={
                     'ToAddresses': [email],
@@ -152,7 +153,7 @@ class Email:
                     },
                 }
             )
-            # response = self.ses.send_templated_email(
+            # response = await self.ses.send_templated_email(
             #     Source=EMAIL_SENDER,
             #     Destination={
             #         'ToAddresses': [email],
