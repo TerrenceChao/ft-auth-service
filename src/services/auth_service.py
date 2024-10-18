@@ -8,7 +8,7 @@ from src.configs.constants import AccountType
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
-from ..infra.db.nosql.schemas import FTAuth, Account
+from ..infra.db.nosql.auth_schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.client.email import EmailClient
 from ..configs.exceptions import *

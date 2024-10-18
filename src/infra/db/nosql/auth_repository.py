@@ -4,7 +4,7 @@ from pydantic import EmailStr
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
-from .schemas import *
+from .auth_schemas import *
 from .ddb_error_handler import *
 from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, TABLE_ACCOUNT_INDEX, BATCH_LIMIT
 from ....configs.constants import DYNAMODB_KEYWORDS

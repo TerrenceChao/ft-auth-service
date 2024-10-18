@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 from typing import Dict, List, Any, Optional
 from pydantic import EmailStr, BaseModel
-from ..infra.db.nosql.schemas import *
+from ..infra.db.nosql.auth_schemas import *
 
 class UpdatePasswordParams(BaseModel):
     pass_hash: str

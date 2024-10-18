@@ -6,7 +6,6 @@ from src.infra.client.google import GoogleLoginRepository
 from src.configs.constants import AccountType
 from fastapi.responses import RedirectResponse
 from ..models.auth_value_objects import AccountVO
-from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.client.email import EmailClient
 from ..configs.exceptions import *
