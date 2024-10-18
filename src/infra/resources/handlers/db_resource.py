@@ -36,7 +36,7 @@ class DynamoDBResourceHandler(ResourceHandler):
         try:
             async with self.lock:
                 if self.db_rsc is None:
-                    async with self.session.resource('dynamodb') as db_resource:
+                    async with self.session.resource('dynamodb', config=ddb_config) as db_resource:
                         self.db_rsc = db_resource
                         meta = await self.db_rsc.meta.client.describe_table(TableName=TABLE_ACCOUNT)
                         log.info('Initial DynamoDB describe_table ResponseMetadata: %s', meta['ResponseMetadata'])
@@ -44,7 +44,7 @@ class DynamoDBResourceHandler(ResourceHandler):
         except Exception as e:
             log.error(e.__str__())
             async with self.lock:
-                async with self.session.resource('dynamodb') as db_resource:
+                async with self.session.resource('dynamodb', config=ddb_config) as db_resource:
                     self.db_rsc = db_resource
 
 

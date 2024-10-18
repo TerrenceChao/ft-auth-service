@@ -1,6 +1,7 @@
 import os
+from dotenv import load_dotenv
 
-LOCAL_REGION = os.getenv("LOCAL_REGION", "ap-northeast-1")
+LOCAL_REGION = os.getenv("AWS_REGION", "ap-northeast-1")
 MIN_PASSWORD_LENGTH = int(os.getenv("MIN_PASSWORD_LENGTH", 6))
 
 # probe cycle secs
@@ -22,8 +23,14 @@ TABLE_ACCOUNT = os.getenv('TABLE_ACCOUNT', 'accounts')
 TABLE_ACCOUNT_INDEX = os.getenv('TABLE_ACCOUNT_INDEX', 'account_indexs')
 BATCH_LIMIT = int(os.getenv('BATCH_LIMIT', '20'))
 
+# db log table conf
+TABLE_EVENT = os.getenv('TABLE_EVENT', 'auth_event_dev')
+TABLE_EVENT_LOG = os.getenv('TABLE_EVENT_LOG', 'auth_event_log_dev')
+MAX_RETRY = int(os.getenv('MAX_RETRY', 3))
+
 # s3 conf
 FT_BUCKET = os.getenv('FT_BUCKET', 'foreign-teacher')
+S3_REGION = os.getenv('S3_REGION', 'ap-northeast-1')
 S3_CONNECT_TIMEOUT=int(os.getenv("S3_CONNECT_TIMEOUT", 10))
 S3_READ_TIMEOUT=int(os.getenv("S3_READ_TIMEOUT", 10))
 S3_MAX_ATTEMPTS=int(os.getenv("S3_MAX_ATTEMPTS", 3))
@@ -54,3 +61,14 @@ FRONTEND_RESET_PASSWORD_URL = os.getenv('FRONTEND_RESET_PASSWORD_URL', 'https://
 SES_CONNECT_TIMEOUT=int(os.getenv("SES_CONNECT_TIMEOUT", 10))
 SES_READ_TIMEOUT=int(os.getenv("SES_READ_TIMEOUT", 10))
 SES_MAX_ATTEMPTS=int(os.getenv("SES_MAX_ATTEMPTS", 3))
+
+
+# event bus conf
+EVENT_BUS_NAME = os.getenv('EVENT_BUS_NAME', 'default')
+EVENT_SOURCE = os.getenv('EVENT_SOURCE', 'ft.test')
+EVENT_DETAIL_TYPE = os.getenv('EVENT_DETAIL_TYPE', 'TestEvent')
+
+# queue conf
+QUEUE_URL = os.getenv('QUEUE_URL', 'https://sqs.ap-northeast-1.amazonaws.com/123456789012/MyQueue')
+MAX_MESSAGES = int(os.getenv('MAX_MESSAGES', 10))
+WAIT_SECS = int(os.getenv('WAIT_SECS', 20))

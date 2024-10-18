@@ -271,8 +271,8 @@ class AuthService:
             
             # 2. 錯誤處理..
             try:
-                # await self.auth_repo.delete_account(
-                #         auth_db=auth_db, account_db=account_db, auth=auth)
+                await self.auth_repo.delete_account(
+                        auth_db=auth_db, account_db=account_db, auth=auth)
                 await self.obj_storage.delete(bucket=auth.email)
 
             except Exception as e:
@@ -282,6 +282,45 @@ class AuthService:
                 raise ServerException(msg='rollback_err')
 
             raise ServerException(msg='db_create_err')
+
+
+    '''
+    從註冊地同步用戶資料
+        1. 將帳戶資料寫入 DynamoDB
+    '''
+    async def duplicate_account_by_registered_region(
+        self,
+        auth: FTAuth, 
+        account: Account,
+        auth_db: Any,
+        account_db: Any,
+    ):
+        res = None
+        try:
+            # 1. 將帳戶資料寫入 DynamoDB
+            res = await self.auth_repo.create_account(
+                auth_db=auth_db, account_db=account_db, auth=auth, account=account)
+            return AccountVO.parse_obj(res)  # all good!
+
+        except Exception as e:
+            log.error(f'{self.__cls_name}.signup [db_create_err] \
+                auth:%s, account:%s, res:%s, err:%s',
+                auth, account, res, e.__str__())
+            
+            # 2. 錯誤處理..
+            try:
+                await self.auth_repo.delete_account(
+                    auth_db=auth_db, account_db=account_db, auth=auth)
+
+            except Exception as e:
+                log.error(f'{self.__cls_name}.signup [rollback_err] \
+                    auth:%s, account:%s, res:%s, err:%s',
+                    auth, account, res, e.__str__())
+                raise ServerException(msg='rollback_err')
+
+            raise ServerException(msg='db_create_err')
+
+
 
     '''
     驗證登入資訊
