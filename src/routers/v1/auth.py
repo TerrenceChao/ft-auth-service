@@ -8,8 +8,6 @@ from ...configs.adapters import *
 
 from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
-from ...infra.storage.global_object_storage import GlobalObjectStorage
-from ...infra.apis.email import Email
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -17,8 +15,8 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 auth_service = AuthService(
     auth_repo=AuthRepository(),
-    obj_storage=GlobalObjectStorage(storage_resource),
-    email=Email(email_client),
+    obj_storage=global_object_storage,
+    email=email_client,
 )
 
 

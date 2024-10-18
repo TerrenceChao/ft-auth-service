@@ -6,7 +6,6 @@ from ..res.response import res_success
 from ...services.email_service import EmailService
 from ...configs.adapters import *
 from ...infra.db.nosql.auth_repository import AuthRepository
-from ...infra.apis.email import Email
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -14,7 +13,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 _email_service = EmailService(
     auth_repo=AuthRepository(),
-    email=Email(email_client),
+    email=email_client,
 )
 
 

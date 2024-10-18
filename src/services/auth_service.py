@@ -10,7 +10,7 @@ from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
 from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
-from ..infra.apis.email import Email
+from ..infra.client.email import Email
 from ..configs.exceptions import *
 import logging as log
 

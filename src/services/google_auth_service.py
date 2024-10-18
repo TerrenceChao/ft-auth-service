@@ -1,14 +1,14 @@
 from src.repositories.auth_repository import IAuthRepository
 from src.repositories.object_storage import IObjectStorage
 from src.services.sso_auth_service import SSOAuthService
-from src.infra.apis.google import GoogleLoginRepository
+from src.infra.client.google import GoogleLoginRepository
 
 from src.configs.constants import AccountType
 from fastapi.responses import RedirectResponse
 from ..models.auth_value_objects import AccountVO
 from ..infra.db.nosql.schemas import FTAuth, Account
 from ..infra.utils import auth_util
-from ..infra.apis.email import Email
+from ..infra.client.email import Email
 from ..configs.exceptions import *
 import logging as log
 

@@ -3,7 +3,7 @@ from pydantic import EmailStr
 from ..repositories.auth_repository import IAuthRepository
 from ..models.auth_value_objects import AccountVO
 from ..models.email_value_objects import EmailAuthVO
-from ..infra.apis.email import Email
+from ..infra.client.email import Email
 from ..configs.exceptions import *
 import logging as log
 

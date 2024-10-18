@@ -5,13 +5,13 @@ import json
 
 from src.services.auth_service import AuthService
 from src.models.sso_api import StatePayload, GeneralUserInfo
-from src.infra.apis.facebook import GetUserInfoResponse
+from src.infra.client.facebook import GetUserInfoResponse
 from src.configs.constants import AccountType
 from ..repositories.auth_repository import IAuthRepository
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
 from ..infra.utils import auth_util
-from ..infra.apis.email import Email
+from ..infra.client.email import Email
 from ..configs.exceptions import *
 import logging as log
 
