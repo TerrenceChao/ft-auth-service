@@ -8,6 +8,7 @@ from src.configs.constants import AccountType
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
+from ..models.event_vos import SignupVO
 from ..infra.db.nosql.auth_schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.client.email import EmailClient
@@ -84,7 +85,7 @@ class AuthService:
         data: Any,
         auth_db: Any,
         account_db: Any,
-    ):
+    ) -> (SignupVO):
         try:
             # 1. 檢查 email 有沒註冊過
             version = await self.__check_if_email_is_registered(email)
@@ -97,8 +98,8 @@ class AuthService:
             # 透過 auth_service.funcntion(...) 判斷是否允許 login/signup; 並且調整註解
 
             # 3. 將帳戶資料寫入 DB
-            account_vo = await self.save_account_data(auth, account, auth_db, account_db)
-            return account_vo
+            signup_vo = await self.save_account_data(auth, account, auth_db, account_db)
+            return signup_vo
         
         except ClientException as e:
             raise ClientException(msg=e.msg, data=e.data)
@@ -260,13 +261,13 @@ class AuthService:
         account: Account,
         auth_db: Any,
         account_db: Any,
-    ):
+    ) -> (SignupVO):
         res = None
         try:
             # 1. 將帳戶資料寫入 DynamoDB
-            res = await self.auth_repo.create_account(
+            (auth, account) = await self.auth_repo.create_account(
                 auth_db=auth_db, account_db=account_db, auth=auth, account=account)
-            return AccountVO.parse_obj(res)  # all good!
+            return SignupVO(auth=auth, account=account)
 
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [db_create_err] \
@@ -302,9 +303,9 @@ class AuthService:
         res = None
         try:
             # 1. 將帳戶資料寫入 DynamoDB
-            res = await self.auth_repo.create_account(
+            (auth, account) = await self.auth_repo.create_account(
                 auth_db=auth_db, account_db=account_db, auth=auth, account=account)
-            return AccountVO.parse_obj(res)  # all good!
+            return SignupVO(auth=auth, account=account) # all good!
 
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [db_create_err] \

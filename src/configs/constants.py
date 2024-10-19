@@ -36,15 +36,18 @@ class AccountType(str, Enum):
 class PubEventStatus(Enum):
     READY = 'ready'
     PUBLISHED = 'published'
-    FAILED = 'failed'
+    PUB_FAILED = 'pub_failed'
 
 
 class SubEventStatus(Enum):
     SUBSCRIBED = 'subscribed'
     COMPLETED = 'completed'
-    FAILED = 'failed'
+    SUB_FAILED = 'sub_failed'
 
 
 
 # event types
-USER_REGISTRATION = 'user_registration'
+class BusinessEventType(Enum):
+    USER_REGISTRATION = 'user_registration'
+    USER_LOGIN = 'user_login'
+    UPDATE_PASSWORD = 'update_password'

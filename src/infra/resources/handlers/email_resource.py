@@ -38,7 +38,7 @@ class SESResourceHandler(ResourceHandler):
                     async with self.session.client('ses', config=ses_config) as email_client:
                         self.email_client = email_client
                         identities = await self.email_client.list_identities()
-                        log.info('SES(Email) list_identities ResponseMetadata: %s', identities['ResponseMetadata'])
+                        log.info('Email[SES] list_identities ResponseMetadata: %s', identities['ResponseMetadata'])
 
         except Exception as e:
             log.error(e.__str__())
@@ -59,9 +59,9 @@ class SESResourceHandler(ResourceHandler):
     async def probe(self):
         try:
             identities = await self.email_client.list_identities()
-            log.info('SES(Email) list_identities HTTPStatusCode: %s', identities['ResponseMetadata']['HTTPStatusCode'])
+            log.info('Email[SES] list_identities HTTPStatusCode: %s', identities['ResponseMetadata']['HTTPStatusCode'])
         except Exception as e:
-            log.error(f'SES(Email) Client Error: %s', e.__str__())
+            log.error(f'Email[SES] Client Error: %s', e.__str__())
             await self.initial()
 
 
@@ -71,7 +71,7 @@ class SESResourceHandler(ResourceHandler):
                 if self.email_client is None:
                     return
                 await self.email_client.close()
-                # log.info('SES(Email) client is closed')
+                # log.info('Email[SES] client is closed')
 
         except Exception as e:
             log.error(e.__str__())

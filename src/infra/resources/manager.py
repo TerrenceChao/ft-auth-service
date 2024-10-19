@@ -1,37 +1,27 @@
 import asyncio
 import aioboto3
 from typing import Dict
-from .handlers._resource import ResourceHandler
-from .handlers.storage_resource import S3ResourceHandler
-from .handlers.db_resource import DynamoDBResourceHandler
-from .handlers.email_resource import SESResourceHandler
-from .handlers.http_resource import HttpResourceHandler
-from ...configs.conf import PROBE_CYCLE_SECS
+from .handlers import *
+from ...configs.conf import (
+    PROBE_CYCLE_SECS,
+    SQS_P_QUEUE_URL,  # for retry failed pub events
+    SQS_S_QUEUE_URL,  # for retry failed sub events
+)
 import logging
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-
 class GlobalResourceManager:
-    def __init__(self):
-        session = aioboto3.Session()
-        self.resources: Dict[str, ResourceHandler] = {
-            'storage': S3ResourceHandler(session),
-            'dynamodb': DynamoDBResourceHandler(session),
-            'email': SESResourceHandler(session),
-            'http': HttpResourceHandler(),
-        }
+    def __init__(self, resources: Dict[str, ResourceHandler]):
+        self.resources: Dict[str, ResourceHandler] = resources
 
     def get(self, resource: str) -> ResourceHandler:
         if resource not in self.resources:
             raise ValueError(f'ResourceHandler "{resource}" not found.')
-        
+
         return self.resources[resource]
-
-
-
 
     async def initial(self):
         for resource in self.resources.values():
@@ -49,20 +39,25 @@ class GlobalResourceManager:
             except Exception as e:
                 log.error('probe error: %s', e)
 
-
     # Regular activation to maintain connections and connection pools
+
     async def keeping_probe(self):
         while True:
             await asyncio.sleep(PROBE_CYCLE_SECS)
             await self.probe()
-                
-
 
     async def close(self):
         for resource in self.resources.values():
             await resource.close()
 
 
-
-
-resource_manager = GlobalResourceManager()
+session = aioboto3.Session()
+resource_manager = GlobalResourceManager({
+    'storage': S3ResourceHandler(session),
+    'dynamodb': DynamoDBResourceHandler(session),
+    'email': SESResourceHandler(session),
+    'event_bus': EventBridgeResourceHandler(session),
+    'pub_failed_dlq': SQSResourceHandler(session=session, label='pub_failed_dlq', queue_url=SQS_P_QUEUE_URL),
+    'sub_failed_dlq': SQSResourceHandler(session=session, label='sub_failed_dlq', queue_url=SQS_S_QUEUE_URL),
+    'http': HttpResourceHandler(),
+})

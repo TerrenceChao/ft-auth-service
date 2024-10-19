@@ -1,10 +1,11 @@
 from typing import Any, Dict
-from fastapi import APIRouter, Depends, Body, status
+from fastapi import APIRouter, Depends, Body, status, BackgroundTasks
 from pydantic import EmailStr
 from ..req.auth_validation import decrypt_meta_for_signup, decrypt_meta, ResetPasswordPayload
 from ..res.response import post_success, res_success
 from ...services.auth_service import AuthService
 from ...configs.adapters import *
+from ...events.pub.event.publish_remote_events import publish_remote_user_registration_task
 
 from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
@@ -62,20 +63,23 @@ async def send_conform_code_by_email(
 
 @router.post('/signup', status_code=status.HTTP_201_CREATED)
 async def signup(
+    bg_task: BackgroundTasks,
     email: EmailStr = Body(...),
     # meta ex: "{\"role\":\"teacher\",\"pass\":\"secret\"}"
     data: Dict = Depends(decrypt_meta_for_signup),
     # auth_db: Any = Depends(get_db),
     # account_db: Any = Depends(get_db),
 ):
-    res = await auth_service.signup(
+    signup_data = await auth_service.signup(
         email=email,
         data=data,
         auth_db=auth_db,
         account_db=account_db,
     )
+    # publidh event & duplicate signup data to remote regions
+    publish_remote_user_registration_task(bg_task=bg_task, signup_data=signup_data)
 
-    return post_success(data=res)
+    return post_success(data=signup_data.to_account())
 
 
 @router.post('/login')

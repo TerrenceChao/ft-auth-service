@@ -1,19 +1,20 @@
 import os
 import asyncio
-from sys import prefix
 from mangum import Mangum
-from typing import Optional, List, Dict
-from fastapi import FastAPI, Request, \
-    Cookie, Header, Path, Query, Body, Form, \
-    File, UploadFile, status, \
-    HTTPException, \
-    Depends, \
-    APIRouter
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from src.configs import exceptions
 from src.infra.resources.manager import resource_manager
+from src.infra.mq.sqs import (
+    RETRY_PUB,
+    RETRY_SUB,
+    polling_messages,
+)
+from src.events.sub.sub_event_manager import (
+    retry_pub_event_manager,
+    retry_sub_event_manager,
+)
 from src.routers.v1 import auth, notify
 from src.routers.v2 import auth as auth_v2
 
@@ -30,11 +31,24 @@ STAGE = os.environ.get('STAGE')
 root_path = '/' if not STAGE else f'/{STAGE}'
 app = FastAPI(title='ForeignTeacher: Auth Service', root_path=root_path)
 
+
 @app.on_event('startup')
 async def startup_event():
     # init global connection pool
     await resource_manager.initial()
     asyncio.create_task(resource_manager.keeping_probe())
+
+    # # msg queue polling
+    asyncio.gather([
+        # await polling_messages(
+        #     retry_type=RETRY_PUB,
+        #     callee=retry_pub_event_manager.subscribe_event,
+        # ),
+        await polling_messages(
+            retry_type=RETRY_SUB,
+            callee=retry_sub_event_manager.subscribe_event,
+        )
+    ])
 
 
 @app.on_event('shutdown')

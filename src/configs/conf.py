@@ -15,9 +15,9 @@ PROBE_CYCLE_SECS = int(os.getenv("PROBE_CYCLE_SECS", 3))
 TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 60 * 60 * 24 * 30))
 
 # db conf
-DDB_CONNECT_TIMEOUT=int(os.getenv("DDB_CONNECT_TIMEOUT", 120))
-DDB_READ_TIMEOUT=int(os.getenv("DDB_READ_TIMEOUT", 30))
-DDB_MAX_ATTEMPTS=int(os.getenv("DDB_MAX_ATTEMPTS", 5))
+DDB_CONNECT_TIMEOUT = int(os.getenv("DDB_CONNECT_TIMEOUT", 20))
+DDB_READ_TIMEOUT = int(os.getenv("DDB_READ_TIMEOUT", 30))
+DDB_MAX_ATTEMPTS = int(os.getenv("DDB_MAX_ATTEMPTS", 5))
 
 # db table conf
 TABLE_AUTH = os.getenv('TABLE_AUTH', 'auth')
@@ -33,9 +33,9 @@ MAX_RETRY = int(os.getenv('MAX_RETRY', 3))
 # s3 conf
 FT_BUCKET = os.getenv('FT_BUCKET', 'foreign-teacher')
 S3_REGION = os.getenv('S3_REGION', 'ap-northeast-1')
-S3_CONNECT_TIMEOUT=int(os.getenv("S3_CONNECT_TIMEOUT", 10))
-S3_READ_TIMEOUT=int(os.getenv("S3_READ_TIMEOUT", 10))
-S3_MAX_ATTEMPTS=int(os.getenv("S3_MAX_ATTEMPTS", 3))
+S3_CONNECT_TIMEOUT = int(os.getenv("S3_CONNECT_TIMEOUT", 10))
+S3_READ_TIMEOUT = int(os.getenv("S3_READ_TIMEOUT", 10))
+S3_MAX_ATTEMPTS = int(os.getenv("S3_MAX_ATTEMPTS", 3))
 
 # connection
 # http
@@ -58,11 +58,13 @@ GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8006/ap
 # email conf
 EMAIL_SENDER = os.getenv('EMAIL_SENDER', 'rtyufjvbn@gmail.com')
 EMAIL_VERIFY_CODE_TEMPLATE = os.getenv('EMAIL_VERIFY_CODE_TEMPLATE', None)
-EMAIL_RESET_PASSWORD_TEMPLATE = os.getenv('EMAIL_RESET_PASSWORD_TEMPLATE', None)
-FRONTEND_RESET_PASSWORD_URL = os.getenv('FRONTEND_RESET_PASSWORD_URL', 'https://localhost:8002/auth/reset_password?token=')
-SES_CONNECT_TIMEOUT=int(os.getenv("SES_CONNECT_TIMEOUT", 10))
-SES_READ_TIMEOUT=int(os.getenv("SES_READ_TIMEOUT", 10))
-SES_MAX_ATTEMPTS=int(os.getenv("SES_MAX_ATTEMPTS", 3))
+EMAIL_RESET_PASSWORD_TEMPLATE = os.getenv(
+    'EMAIL_RESET_PASSWORD_TEMPLATE', None)
+FRONTEND_RESET_PASSWORD_URL = os.getenv(
+    'FRONTEND_RESET_PASSWORD_URL', 'https://localhost:8002/auth/reset_password?token=')
+SES_CONNECT_TIMEOUT = int(os.getenv("SES_CONNECT_TIMEOUT", 10))
+SES_READ_TIMEOUT = int(os.getenv("SES_READ_TIMEOUT", 10))
+SES_MAX_ATTEMPTS = int(os.getenv("SES_MAX_ATTEMPTS", 3))
 
 
 # event bus conf
@@ -70,7 +72,15 @@ EVENT_BUS_NAME = os.getenv('EVENT_BUS_NAME', 'default')
 EVENT_SOURCE = os.getenv('EVENT_SOURCE', 'ft.test')
 EVENT_DETAIL_TYPE = os.getenv('EVENT_DETAIL_TYPE', 'TestEvent')
 
-# queue conf
-QUEUE_URL = os.getenv('QUEUE_URL', 'https://sqs.ap-northeast-1.amazonaws.com/123456789012/MyQueue')
-MAX_MESSAGES = int(os.getenv('MAX_MESSAGES', 10))
-WAIT_SECS = int(os.getenv('WAIT_SECS', 20))
+# sqs/event bus conf
+MQ_CONNECT_TIMEOUT = int(os.getenv("MQ_CONNECT_TIMEOUT", 10))
+MQ_READ_TIMEOUT = int(os.getenv("MQ_READ_TIMEOUT", 10))
+MQ_MAX_ATTEMPTS = int(os.getenv("MQ_MAX_ATTEMPTS", 3))
+
+# sqs
+# for retry failed pub events
+SQS_P_QUEUE_URL = os.getenv('SQS_P_QUEUE_URL', 'https://sqs.ap-southeast-1.amazonaws.com/549734764220/FT_DLQ_TEST')
+# for retry failed sub events
+SQS_S_QUEUE_URL = os.getenv('SQS_S_QUEUE_URL', 'https://sqs.ap-southeast-1.amazonaws.com/549734764220/FT_DLQ_TEST')
+SQS_MAX_MESSAGES = int(os.getenv('SQS_MAX_MESSAGES', 10))
+SQS_WAIT_SECS = int(os.getenv('SQS_WAIT_SECS', 20))
