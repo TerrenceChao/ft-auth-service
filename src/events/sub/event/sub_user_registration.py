@@ -1,11 +1,11 @@
-from ....services.event_service import *
+from ....configs.conf import MAX_RETRY
 from ....models.event_vos import *
 from ....models.auth_value_objects import *
 from ....configs.adapters import *
-from ....infra.mq.sqs import (
-    RETRY_SUB,
-    send_message as publish_event_to_dlq,  # no testable
-)
+import logging
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 # no testable
@@ -15,6 +15,8 @@ async def subscribe_user_registration(event: SubEventDetailVO):
         log.info('subscribe_user_registration: %s, status: %s',
                  event.dict(), event.status.value)
         signup_vo = SignupVO.parse_obj(event.metadata)
+
+        # TODO: 重新寫一個。如果原本就有資料，反而因為 rollback 而刪除原本資料 !!!
         await auth_svc.duplicate_account_by_registered_region(
             signup_vo.auth,
             signup_vo.account,
@@ -29,7 +31,7 @@ async def subscribe_user_registration(event: SubEventDetailVO):
     except Exception as e:
         log.error('subscribe_user_registration error: %s', e)
         event.need_retry()
-        if event.retry >= MAX_RETRY:
+        if event.retry > MAX_RETRY:
             await alert_svc.exceed_retry_alert('retry event exceeds the max retry', event.retry)
             return
 
@@ -37,7 +39,7 @@ async def subscribe_user_registration(event: SubEventDetailVO):
             await event_repo.append_sub_event_log(event)
 
             # publish to dead letter queue & retry
-            await publish_event_to_dlq(RETRY_SUB, event.payload())
+            await failed_subscribed_events_dlq.publish_message(event.payload())
             log.info('[subscribe_user_registration] send failed sub event to DLQ: %s, status: %s',
                      event.dict(), event.status.value)
         except Exception as e1:

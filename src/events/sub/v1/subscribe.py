@@ -1,6 +1,7 @@
 import json
 from fastapi import APIRouter, Request
 from ..sub_event_manager import sub_remote_event_manager
+from ....configs.conf import LOCAL_REGION
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -55,16 +56,26 @@ router = APIRouter(
     }
 }
 '''
+
+
 @router.post('/remote-events')
 async def receive_remote_event(request: Request):
-    event = await request.json()  # 獲取 JSON 請求體
-    log.info('Received Remote Event: %s', json.dumps(event, indent=2))  # 打印事件內容
+    event = await request.json()
+    log.info('Received Remote Event: %s', json.dumps(event, indent=2))
 
     # 在這裡處理事件邏輯
     event_detail = event.get('detail', None)
     if not event_detail:
         return {
             'message': 'Remote Event detail is empty!',
+        }
+
+    region = event_detail.get('region', None)
+    if region == LOCAL_REGION:
+        log.info('Remote Event is from local region! \nregion: %s,local region:  %s',
+                 region, LOCAL_REGION)
+        return {
+            'message': 'Remote Event is from local region!',
         }
 
     await sub_remote_event_manager.subscribe_event(event_detail)
@@ -76,8 +87,8 @@ async def receive_remote_event(request: Request):
 
 # @router.post('/local-events')
 # async def receive_local_event(request: Request):
-#     event = await request.json()  # 獲取 JSON 請求體
-#     log.info('Received Local Event: %s', json.dumps(event, indent=2))  # 打印事件內容
+#     event = await request.json()
+#     log.info('Received Local Event: %s', json.dumps(event, indent=2))
 
 #     # 在這裡處理事件邏輯
 #     event_detail = event.get('detail', None)
@@ -85,7 +96,15 @@ async def receive_remote_event(request: Request):
 #         return {
 #             'message': 'Local Event detail is empty!',
 #         }
-    
+
+#     region = event_detail.get('region', None)
+#     if region != LOCAL_REGION:
+#         log.info('Local Event is not from local region! \nregion: %s,local region:  %s',
+#                  region, LOCAL_REGION)
+#         return {
+#             'message': 'Local Event is not from local region!',
+#         }
+
 #     return {
 #         'message': 'Local Event received successfully!',
 #         'event': event,

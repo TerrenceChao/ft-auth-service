@@ -57,7 +57,7 @@ resource_manager = GlobalResourceManager({
     'dynamodb': DynamoDBResourceHandler(session),
     'email': SESResourceHandler(session),
     'event_bus': EventBridgeResourceHandler(session),
-    'pub_failed_dlq': SQSResourceHandler(session=session, label='pub_failed_dlq', queue_url=SQS_P_QUEUE_URL),
-    'sub_failed_dlq': SQSResourceHandler(session=session, label='sub_failed_dlq', queue_url=SQS_S_QUEUE_URL),
+    'failed_pub_mq_rsc': SQSResourceHandler(session=session, label='failed pub events DLQ', queue_url=SQS_P_QUEUE_URL),
+    'failed_sub_mq_rsc': SQSResourceHandler(session=session, label='failed sub events DLQ', queue_url=SQS_S_QUEUE_URL),
     'http': HttpResourceHandler(),
 })

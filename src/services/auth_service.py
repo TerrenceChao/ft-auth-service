@@ -290,8 +290,7 @@ class AuthService:
 
 
     '''
-    從註冊地同步用戶資料
-        1. 將帳戶資料寫入 DynamoDB
+    從註冊地同步用戶資料: 將帳戶資料寫入 DynamoDB
     '''
     async def duplicate_account_by_registered_region(
         self,

@@ -6,10 +6,9 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from src.configs import exceptions
 from src.infra.resources.manager import resource_manager
-from src.infra.mq.sqs import (
-    RETRY_PUB,
-    RETRY_SUB,
-    polling_messages,
+from src.configs.adapters import (
+    failed_publish_events_dlq,
+    failed_subscribed_events_dlq,
 )
 from src.events.sub.sub_event_manager import (
     retry_pub_event_manager,
@@ -38,17 +37,13 @@ async def startup_event():
     await resource_manager.initial()
     asyncio.create_task(resource_manager.keeping_probe())
 
-    # # msg queue polling
-    asyncio.gather([
-        # await polling_messages(
-        #     retry_type=RETRY_PUB,
-        #     callee=retry_pub_event_manager.subscribe_event,
-        # ),
-        await polling_messages(
-            retry_type=RETRY_SUB,
-            callee=retry_sub_event_manager.subscribe_event,
-        )
-    ])
+    # polling local messages(SQS)
+    # asyncio.create_task(failed_publish_events_dlq.subscribe_messages(
+    #     retry_pub_event_manager.subscribe_event,
+    # ))
+    asyncio.create_task(failed_subscribed_events_dlq.subscribe_messages(
+        retry_sub_event_manager.subscribe_event,
+    ))
 
 
 @app.on_event('shutdown')

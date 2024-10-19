@@ -5,8 +5,11 @@ from ..req.auth_validation import decrypt_meta_for_signup, decrypt_meta, ResetPa
 from ..res.response import post_success, res_success
 from ...services.auth_service import AuthService
 from ...configs.adapters import *
-from ...events.pub.event.publish_remote_events import publish_remote_user_registration_task
-
+from ...events.pub.event.publish_remote_events import (
+    publish_remote_user_registration_task,
+    # publish_remote_user_login_task,
+    # publish_remote_update_passowrd_task,
+)
 from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
 import logging as log

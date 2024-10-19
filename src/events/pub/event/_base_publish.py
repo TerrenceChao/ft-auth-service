@@ -1,15 +1,10 @@
 from ....configs.conf import MAX_RETRY
 from ....models.event_vos import PubEventDetailVO
-from ....infra.mq.event_bus import (
-    publish_to_event_bus as publish_event_to_remote_regions,
-)
-from ....infra.mq.sqs import (
-    RETRY_PUB,
-    send_message as publish_event_to_dlq,
-)
 from ....configs.adapters import (
+    event_bus_adapter as event_bus,
     event_repo,
     alert_svc,
+    failed_publish_events_dlq,
 )
 import logging
 
@@ -33,7 +28,7 @@ async def publish_remote_event(event: PubEventDetailVO):
         event.ready()
         log.info('publish_remote_event: %s, status: %s',
                  event.dict(), event.status.value)
-        await publish_event_to_remote_regions(event.payload())
+        await event_bus.publish_message(event.payload())
         event.published()
         await event_repo.append_pub_event_log(event)
         log.info('publish_remote_event: %s, status: %s',
@@ -42,15 +37,15 @@ async def publish_remote_event(event: PubEventDetailVO):
     except Exception as e:
         log.error('publish_remote_event error: %s', e)
         event.need_retry()
-        if event.retry >= MAX_RETRY:
+        if event.retry > MAX_RETRY:
             await alert_svc.exceed_retry_alert('retry event exceeds the max retry', event.retry)
             return
 
         try:
             await event_repo.append_pub_event_log(event)
 
-            # publish to dead letter queue & retry
-            await publish_event_to_dlq(RETRY_PUB, event.payload())
+            # publish [failed pub event] to dead letter queue
+            await failed_publish_events_dlq.publish_message(event.payload())
             log.info('[publish_remote_event] send failed pub event to DLQ: %s, status: %s',
                      event.dict(), event.status.value)
         except Exception as e1:
