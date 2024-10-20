@@ -93,17 +93,6 @@ class SignupVO(BaseModel):
             status=PubEventStatus.READY,
         )
 
-
-    def sub_event(self) -> (SubEventDetailVO):
-        return SubEventDetailVO(
-            event_id=gen_snowflake_id(),
-            event_type=BusinessEventType.USER_REGISTRATION.value,
-            metadata={
-                'auth': self.auth.dict(),
-                'account': self.account.dict(),
-            },
-            status=SubEventStatus.SUBSCRIBED,
-        )
     
     # filter sensitive data
     def to_account(self):
