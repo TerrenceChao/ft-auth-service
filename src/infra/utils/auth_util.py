@@ -8,7 +8,7 @@ from typing import List, Tuple
 from snowflake import SnowflakeGenerator
 import hashlib
 from src.configs.constants import AccountType
-from ..db.nosql.schemas import FTAuth, Account
+from ..db.nosql.auth_schemas import FTAuth, Account
 from ...configs.exceptions import *
 import logging as log
 

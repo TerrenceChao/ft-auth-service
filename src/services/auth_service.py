@@ -8,7 +8,8 @@ from src.configs.constants import AccountType
 from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
 from ..repositories.object_storage import IObjectStorage
 from ..models.auth_value_objects import AccountVO
-from ..infra.db.nosql.schemas import FTAuth, Account
+from ..models.event_vos import SignupVO
+from ..infra.db.nosql.auth_schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.client.email import EmailClient
 from ..configs.exceptions import *
@@ -84,7 +85,7 @@ class AuthService:
         data: Any,
         auth_db: Any,
         account_db: Any,
-    ):
+    ) -> (SignupVO):
         try:
             # 1. 檢查 email 有沒註冊過
             version = await self.__check_if_email_is_registered(email)
@@ -97,8 +98,8 @@ class AuthService:
             # 透過 auth_service.funcntion(...) 判斷是否允許 login/signup; 並且調整註解
 
             # 3. 將帳戶資料寫入 DB
-            account_vo = await self.save_account_data(auth, account, auth_db, account_db)
-            return account_vo
+            signup_vo = await self.save_account_data(auth, account, auth_db, account_db)
+            return signup_vo
         
         except ClientException as e:
             raise ClientException(msg=e.msg, data=e.data)
@@ -260,13 +261,13 @@ class AuthService:
         account: Account,
         auth_db: Any,
         account_db: Any,
-    ):
+    ) -> (SignupVO):
         res = None
         try:
             # 1. 將帳戶資料寫入 DynamoDB
-            res = await self.auth_repo.create_account(
+            (auth, account) = await self.auth_repo.create_account(
                 auth_db=auth_db, account_db=account_db, auth=auth, account=account)
-            return AccountVO.parse_obj(res)  # all good!
+            return SignupVO(auth=auth, account=account)
 
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [db_create_err] \
@@ -275,8 +276,8 @@ class AuthService:
             
             # 2. 錯誤處理..
             try:
-                # await self.auth_repo.delete_account(
-                #         auth_db=auth_db, account_db=account_db, auth=auth)
+                await self.auth_repo.delete_account(
+                        auth_db=auth_db, account_db=account_db, auth=auth)
                 await self.obj_storage.delete(bucket=auth.email)
 
             except Exception as e:
@@ -286,6 +287,55 @@ class AuthService:
                 raise ServerException(msg='rollback_err')
 
             raise ServerException(msg='db_create_err')
+
+
+    '''
+    從註冊地同步用戶資料: 將帳戶資料寫入 DynamoDB
+    '''
+    async def duplicate_account_by_registered_region(
+        self,
+        auth: FTAuth, 
+        account: Account,
+        auth_db: Any,
+        account_db: Any,
+    ):
+        res = None
+        try:
+            # 1. 檢查 email 有沒註冊過
+            user = await self.auth_repo.get_account_by_email(
+                auth_db=auth_db, 
+                account_db=account_db, 
+                email=auth.email, 
+                fields=['aid'])
+            
+            # 2. 若為新用戶，將資料寫入 DynamoDB
+            if not user:
+                (auth, account) = await self.auth_repo.create_account(
+                    auth_db=auth_db, account_db=account_db, auth=auth, account=account)
+                
+            res = SignupVO(auth=auth, account=account) # all good!
+
+        except Exception as e:
+            log.error(f'{self.__cls_name}.signup [db_create_err] \
+                auth:%s, account:%s, err:%s',
+                auth, account, e.__str__())
+
+            # 3. 錯誤處理..
+            try:
+                await self.auth_repo.delete_account(
+                    auth_db=auth_db, account_db=account_db, auth=auth)
+
+            except Exception as e:
+                log.error(f'{self.__cls_name}.signup [rollback_err] \
+                    auth:%s, account:%s, err:%s',
+                    auth, account, e.__str__())
+                raise ServerException(msg='rollback_err')
+
+            raise ServerException(msg='db_create_err')
+
+        return res
+
+
 
     '''
     驗證登入資訊

@@ -31,3 +31,23 @@ class AccountType(str, Enum):
     FT = 'ft'
     FB = 'fb'
     GOOGLE = 'google'
+
+
+class PubEventStatus(Enum):
+    READY = 'ready'
+    PUBLISHED = 'published'
+    PUB_FAILED = 'pub_failed'
+
+
+class SubEventStatus(Enum):
+    SUBSCRIBED = 'subscribed'
+    COMPLETED = 'completed'
+    SUB_FAILED = 'sub_failed'
+
+
+
+# event types
+class BusinessEventType(Enum):
+    USER_REGISTRATION = 'user_registration'
+    USER_LOGIN = 'user_login'
+    UPDATE_PASSWORD = 'update_password'

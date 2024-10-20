@@ -1,10 +1,10 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 from decimal import Decimal
 from pydantic import EmailStr
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
-from .schemas import *
+from .auth_schemas import *
 from .ddb_error_handler import *
 from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, TABLE_ACCOUNT_INDEX, BATCH_LIMIT
 from ....configs.constants import DYNAMODB_KEYWORDS
@@ -90,7 +90,7 @@ class AuthRepository(IAuthRepository):
         projection_expression = ','.join(fields)
         return projection_expression, expression_attr_names
 
-    async def create_account(self, auth_db: Any, account_db: Any, auth: FTAuth, account: Account):
+    async def create_account(self, auth_db: Any, account_db: Any, auth: FTAuth, account: Account) -> Tuple[FTAuth, Account]:
         response = None
         auth_dict: Dict = auth.create_ts().dict()
         account_dict: Dict = account.create_ts().dict()
@@ -127,7 +127,7 @@ class AuthRepository(IAuthRepository):
                 ]
             )
             if response_success(response):
-                return account_dict
+                return (auth, account)
             
             raise Exception('insert_req_error')
 

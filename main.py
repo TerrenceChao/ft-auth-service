@@ -1,25 +1,27 @@
 import os
 import asyncio
-from sys import prefix
 from mangum import Mangum
-from typing import Optional, List, Dict
-from fastapi import FastAPI, Request, \
-    Cookie, Header, Path, Query, Body, Form, \
-    File, UploadFile, status, \
-    HTTPException, \
-    Depends, \
-    APIRouter
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from src.configs import exceptions
 from src.infra.resources.manager import resource_manager
+from src.configs.adapters import (
+    failed_publish_events_dlq,
+    failed_subscribed_events_dlq,
+)
+from src.events.sub.sub_event_manager import (
+    retry_pub_event_manager,
+    retry_sub_event_manager,
+)
 from src.routers.v1 import auth, notify
 from src.routers.v2 import auth as auth_v2
+from src.events.sub.v1 import subscribe
 
 
 router_v1 = APIRouter(prefix='/auth/api/v1')
 router_v1.include_router(auth.router)
+router_v1.include_router(subscribe.router)
 router_v1.include_router(notify.router)
 
 router_v2 = APIRouter(prefix='/auth/api/v2')
@@ -30,11 +32,20 @@ STAGE = os.environ.get('STAGE')
 root_path = '/' if not STAGE else f'/{STAGE}'
 app = FastAPI(title='ForeignTeacher: Auth Service', root_path=root_path)
 
+
 @app.on_event('startup')
 async def startup_event():
     # init global connection pool
     await resource_manager.initial()
     asyncio.create_task(resource_manager.keeping_probe())
+
+    # polling local messages(SQS)
+    asyncio.create_task(failed_publish_events_dlq.subscribe_messages(
+        retry_pub_event_manager.subscribe_event,
+    ))
+    asyncio.create_task(failed_subscribed_events_dlq.subscribe_messages(
+        retry_sub_event_manager.subscribe_event,
+    ))
 
 
 @app.on_event('shutdown')

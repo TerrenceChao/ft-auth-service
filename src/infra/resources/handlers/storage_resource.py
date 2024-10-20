@@ -7,6 +7,7 @@ from ....configs.conf import (
     S3_CONNECT_TIMEOUT,
     S3_READ_TIMEOUT,
     S3_MAX_ATTEMPTS,
+    S3_REGION,
 )
 import logging
 
@@ -36,7 +37,7 @@ class S3ResourceHandler(ResourceHandler):
         try:
             async with self.lock:
                 if self.storage_rsc is None:
-                    async with self.session.resource('s3', config=s3_config) as storage_resource:
+                    async with self.session.resource('s3', config=s3_config, region_name=S3_REGION) as storage_resource:
                         self.storage_rsc = storage_resource
                         meta = await self.storage_rsc.meta.client.head_bucket(Bucket=FT_BUCKET)
                         log.info('Initial GlobalObjectStorage[S3] head_bucket ResponseMetadata: %s', meta['ResponseMetadata'])
@@ -44,7 +45,7 @@ class S3ResourceHandler(ResourceHandler):
         except Exception as e:
             log.error(e.__str__())
             async with self.lock:
-                async with self.session.resource('s3', config=s3_config) as storage_resource:
+                async with self.session.resource('s3', config=s3_config, region_name=S3_REGION) as storage_resource:
                     self.storage_rsc = storage_resource
 
 
