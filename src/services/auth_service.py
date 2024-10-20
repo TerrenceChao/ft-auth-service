@@ -301,28 +301,39 @@ class AuthService:
     ):
         res = None
         try:
-            # 1. 將帳戶資料寫入 DynamoDB
-            (auth, account) = await self.auth_repo.create_account(
-                auth_db=auth_db, account_db=account_db, auth=auth, account=account)
-            return SignupVO(auth=auth, account=account) # all good!
+            # 1. 檢查 email 有沒註冊過
+            user = await self.auth_repo.get_account_by_email(
+                auth_db=auth_db, 
+                account_db=account_db, 
+                email=auth.email, 
+                fields=['aid'])
+            
+            # 2. 若為新用戶，將資料寫入 DynamoDB
+            if not user:
+                (auth, account) = await self.auth_repo.create_account(
+                    auth_db=auth_db, account_db=account_db, auth=auth, account=account)
+                
+            res = SignupVO(auth=auth, account=account) # all good!
 
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [db_create_err] \
-                auth:%s, account:%s, res:%s, err:%s',
-                auth, account, res, e.__str__())
-            
-            # 2. 錯誤處理..
+                auth:%s, account:%s, err:%s',
+                auth, account, e.__str__())
+
+            # 3. 錯誤處理..
             try:
                 await self.auth_repo.delete_account(
                     auth_db=auth_db, account_db=account_db, auth=auth)
 
             except Exception as e:
                 log.error(f'{self.__cls_name}.signup [rollback_err] \
-                    auth:%s, account:%s, res:%s, err:%s',
-                    auth, account, res, e.__str__())
+                    auth:%s, account:%s, err:%s',
+                    auth, account, e.__str__())
                 raise ServerException(msg='rollback_err')
 
             raise ServerException(msg='db_create_err')
+
+        return res
 
 
 

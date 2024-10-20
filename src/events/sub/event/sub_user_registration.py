@@ -16,7 +16,6 @@ async def subscribe_user_registration(event: SubEventDetailVO):
                  event.dict(), event.status.value)
         signup_vo = SignupVO.parse_obj(event.metadata)
 
-        # TODO: 重新寫一個。如果原本就有資料，反而因為 rollback 而刪除原本資料 !!!
         await auth_svc.duplicate_account_by_registered_region(
             signup_vo.auth,
             signup_vo.account,
