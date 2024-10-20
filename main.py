@@ -38,9 +38,9 @@ async def startup_event():
     asyncio.create_task(resource_manager.keeping_probe())
 
     # polling local messages(SQS)
-    # asyncio.create_task(failed_publish_events_dlq.subscribe_messages(
-    #     retry_pub_event_manager.subscribe_event,
-    # ))
+    asyncio.create_task(failed_publish_events_dlq.subscribe_messages(
+        retry_pub_event_manager.subscribe_event,
+    ))
     asyncio.create_task(failed_subscribed_events_dlq.subscribe_messages(
         retry_sub_event_manager.subscribe_event,
     ))
