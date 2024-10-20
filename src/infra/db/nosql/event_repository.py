@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Tuple
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Attr
 
@@ -32,20 +32,27 @@ class EventRepository(IEventRepository):
         try:
             event_entity: EventEntity = EventEntity \
                 .parse_obj(event_dict) \
-                .update_ts() # updated_at
+                .create_ts() # created_at
             event_log_entity: EventLogEntity = EventLogEntity.parse_event_entity(event_entity)
             db = await self.event_db.access()
             client = db.meta.client
+
+            (last_created, last_updated) = \
+                await self.get_last_event_times(client, event_entity.event_id)
+            if event_entity.updated_at <= last_updated:
+                log.info('upsert_publish_event_log. updated_at is not newer than the existing one.\
+                            last_updated: %s, new: %s', last_updated, event_entity.updated_at)
+                return
+            
+            if last_created > 0:
+                event_entity.created_at = last_created
+
             response = await client.transact_write_items(
                 TransactItems=[
                     {
                         'Put': {
                             'TableName': TABLE_EVENT,
                             'Item': event_entity.dict(),
-                            'ConditionExpression': 'attribute_not_exists(updated_at) OR updated_at < :new_updated_at',  # 條件檢查
-                            'ExpressionAttributeValues': {
-                                ':new_updated_at': event_entity.updated_at  # 直接在條件中使用值
-                            }
                         }
                     },
                     {
@@ -76,20 +83,27 @@ class EventRepository(IEventRepository):
         try:
             event_entity: EventEntity = EventEntity \
                 .parse_obj(event_dict) \
-                .update_ts() # updated_at
+                .create_ts() # created_at
             event_log_entity: EventLogEntity = EventLogEntity.parse_event_entity(event_entity)
             db = await self.event_db.access()
             client = db.meta.client
+
+            (last_created, last_updated) = \
+                await self.get_last_event_times(client, event_entity.event_id)
+            if event_entity.updated_at <= last_updated:
+                log.info('upsert_subscribe_event_log. updated_at is not newer than the existing one.\
+                            last_updated: %s, new: %s', last_updated, event_entity.updated_at)
+                return
+            
+            if last_created > 0:
+                event_entity.created_at = last_created
+
             response = await client.transact_write_items(
                 TransactItems=[
                     {
                         'Put': {
                             'TableName': TABLE_EVENT,
                             'Item': event_entity.dict(),
-                            'ConditionExpression': 'attribute_not_exists(updated_at) OR updated_at < :new_updated_at',  # 條件檢查
-                            'ExpressionAttributeValues': {
-                                ':new_updated_at': event_entity.updated_at  # 直接在條件中使用值
-                            }
                         }
                     },
                     {
@@ -109,3 +123,20 @@ class EventRepository(IEventRepository):
         except Exception as e:
             log.error(f'upsert_subscribe_event_log error. [db_create_error], event:{event_dict}, err:{str(e)}')
             raise Exception(f'db_create_error: {str(e)}')
+
+
+    async def get_last_event_times(self, client: Any, event_id: int) -> Tuple[int, int]:
+        response = await client.get_item(
+            TableName=TABLE_EVENT,
+            Key={'event_id': event_id}
+        )
+        if 'Item' in response:
+            item = dict(response['Item'])
+            created_at = item.get('created_at', 0)
+            updated_at = item.get('updated_at', 0)
+            return (
+                created_at if created_at else 0,
+                updated_at if updated_at else 0,
+            )
+        else:
+            return (0, 0)
