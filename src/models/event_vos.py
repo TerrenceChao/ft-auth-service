@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, List, Any, Type
+from typing import Optional, Dict, List, Any, Type, Callable
 from ..configs.constants import *
 from ..infra.db.nosql.auth_schemas import FTAuth, Account
 from ..infra.utils.auth_util import gen_snowflake_id
@@ -44,6 +44,7 @@ class PubEventDetailVO(EventDetailVO):
 
 class SubEventDetailVO(EventDetailVO):
     status: SubEventStatus = SubEventStatus.SUBSCRIBED # TODO: apply [enum.value: str]???
+    ack: Optional[Callable] = None
 
     def subscribed(self) -> 'SubEventDetailVO':
         self.status = SubEventStatus.SUBSCRIBED
@@ -57,6 +58,10 @@ class SubEventDetailVO(EventDetailVO):
         self.status = SubEventStatus.SUB_FAILED
         self.retry += 1
         return self
+    
+    async def call_ack(self):
+        if self.ack:
+            await self.ack()
     
     def dict(self):
         original_dict = super().dict()

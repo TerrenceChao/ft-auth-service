@@ -26,6 +26,7 @@ async def subscribe_user_registration(event: SubEventDetailVO):
         await event_repo.append_sub_event_log(event)
         log.info('subscribe_user_registration and create signup data success %s, status: %s',
                  signup_vo.dict(), event.status.value)
+        await event.call_ack()
 
     except Exception as e:
         log.error('subscribe_user_registration error: %s', e)
@@ -41,5 +42,7 @@ async def subscribe_user_registration(event: SubEventDetailVO):
             await failed_subscribed_events_dlq.publish_message(event.payload())
             log.info('[subscribe_user_registration] send failed sub event to DLQ: %s, status: %s',
                      event.dict(), event.status.value)
+            await event.call_ack()
+
         except Exception as e1:
             await alert_svc.exception_alert('An error occurred during retry', e1)

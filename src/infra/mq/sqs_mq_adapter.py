@@ -98,12 +98,12 @@ class SqsMqAdapter:
                         ReceiptHandle=message['ReceiptHandle'],
                     )
 
-                # # ack: handled by callee
-                # kwargs['ack'] = ack
+                # ack: handled by callee
+                request_body.update({'ack': ack})
 
                 # main process
                 await callee(request_body, **kwargs)
-                await ack()
+                # await ack() >> ack: handled by callee
 
             # sleep 1 secs if there's no msgs
             if not messages:
