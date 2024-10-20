@@ -33,14 +33,14 @@ async def publish_remote_update_passowrd(sensitive_data: Any):
 
 def publish_remote_user_registration_task(bg_task: BackgroundTasks, signup_data: evt.SignupVO):
     log.info('background processing publish_remote_user_registration ...')
-    bg_task.add_task(bg_task, publish_remote_user_registration, signup_data)
+    bg_task.add_task(publish_remote_user_registration, signup_data=signup_data)
 
 
 def publish_remote_user_login_task(bg_task: BackgroundTasks, data: Any):
     log.info('background processing publish_remote_user_login ...')
-    bg_task.add_task(bg_task, publish_remote_user_login, data)
+    bg_task.add_task(publish_remote_user_login, user_data=data)
 
 
 def publish_remote_update_passowrd_task(bg_task: BackgroundTasks, data: Any):
     log.info('background processing publish_remote_update_passowrd ...')
-    bg_task.add_task(bg_task, publish_remote_update_passowrd, data)
+    bg_task.add_task(publish_remote_update_passowrd, sensitive_data=data)

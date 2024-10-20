@@ -31,11 +31,32 @@ provider:
   iamRoleStatements:
   - Effect: Allow
     Action:
+    - events:PutEvents
+    - events:DescribeEventBus
+    - events:ListRules
+    Resource:
+    - arn:aws:events:${env:THE_REGION}:${env:ACCOUNT_ID}:event-bus/${env:EVENT_BUS_NAME}
+
+  - Effect: Allow
+    Action:
+    - sqs:SendMessage
+    - sqs:GetQueueAttributes
+    - sqs:ReceiveMessage
+    - sqs:DeleteMessage
+    - sqs:ListQueues
+    Resource:
+    - arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:${env:SQS_NAME_PUB_DLQ}
+    - arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:${env:SQS_NAME_SUB_DLQ}
+
+  - Effect: Allow
+    Action:
     - dynamodb:*
     Resource:
     - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_AUTH}
     - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_ACCOUNT}
     - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_ACCOUNT_INDEX}
+    - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_AUTH_EVENT}
+    - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_AUTH_EVENT_LOG}
 
   - Effect: Allow
     Action:
@@ -52,6 +73,8 @@ provider:
   - Effect: Allow
     Action:
     - ses:SendEmail
+    - ses:GetSendQuota
+    - ses:ListIdentities
     Resource:
     - arn:aws:ses:${env:THE_REGION}:${env:ACCOUNT_ID}:identity/*
     - arn:aws:ses:${env:THE_REGION}:${env:ACCOUNT_ID}:configuration-set/*
@@ -85,6 +108,12 @@ functions:
     layers:
     - {Ref: PythonRequirementsLambdaLayer}
     events:
+    - http:
+        method: post
+        path: /auth/api/v1/subscribe/remote-events
+    - http:
+        method: post
+        path: /auth/api/v1/subscribe/local-events
     - http:
         method: any
         path: /{proxy+}

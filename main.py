@@ -16,10 +16,12 @@ from src.events.sub.sub_event_manager import (
 )
 from src.routers.v1 import auth, notify
 from src.routers.v2 import auth as auth_v2
+from src.events.sub.v1 import subscribe
 
 
 router_v1 = APIRouter(prefix='/auth/api/v1')
 router_v1.include_router(auth.router)
+router_v1.include_router(subscribe.router)
 router_v1.include_router(notify.router)
 
 router_v2 = APIRouter(prefix='/auth/api/v2')
