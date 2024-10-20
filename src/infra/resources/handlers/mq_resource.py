@@ -6,9 +6,6 @@ from ....configs.conf import (
     MQ_CONNECT_TIMEOUT,
     MQ_READ_TIMEOUT,
     MQ_MAX_ATTEMPTS,
-
-    SQS_MAX_MESSAGES,
-    SQS_WAIT_SECS,
 )
 import logging
 
@@ -34,6 +31,10 @@ class SQSResourceHandler(ResourceHandler):
         self.label = label
         self.queue_url = queue_url
         self.sqs_client = None
+        self.trigger_subscribe_messages = None
+
+    def timeout(self) -> bool:
+        return False
 
     async def initial(self):
         try:
@@ -45,7 +46,7 @@ class SQSResourceHandler(ResourceHandler):
                             QueueUrl=self.queue_url,
                             AttributeNames=['QueueArn']
                         )
-                        log.info('Message Queue[SQS] Connection HTTPStatusCode: %s',
+                        log.info('Message Queue[SQS] Connection QueueArn: %s',
                                  response['Attributes']['QueueArn'])
 
         except Exception as e:
@@ -59,6 +60,12 @@ class SQSResourceHandler(ResourceHandler):
             if self.sqs_client is None:
                 await self.initial()
 
+            # assign trigger_subscribe_messages function
+            trigger_subscribe_messages = kwargs.get(
+                'trigger_subscription', None)
+            if trigger_subscribe_messages:
+                self.trigger_subscribe_messages = trigger_subscribe_messages
+
             return self.sqs_client
 
     # Regular activation to maintain connections and connection pools
@@ -66,13 +73,19 @@ class SQSResourceHandler(ResourceHandler):
         try:
             response = await self.sqs_client.get_queue_attributes(
                 QueueUrl=self.queue_url,
-                AttributeNames=['QueueArn']
+                AttributeNames=['QueueArn'],
             )
             log.info('Message Queue[SQS] Connection HTTPStatusCode: %s',
-                     response['Attributes']['QueueArn'])
+                     response['ResponseMetadata']['HTTPStatusCode'])
         except Exception as e:
             log.error(f'Message Queue[SQS] Connection Error: %s', e.__str__())
             await self.initial()
+
+        finally:
+            if self.trigger_subscribe_messages:
+                log.info(
+                    'Probing Message Queue[SQS]: trigger_subscribe_messages!')
+                await self.trigger_subscribe_messages()
 
     async def close(self):
         try:
@@ -103,7 +116,7 @@ class EventBridgeResourceHandler(ResourceHandler):
                     async with self.session.client('events', config=mq_config) as events_client:
                         self.events_client = events_client
                         response = await self.events_client.describe_event_bus()
-                        log.info('Event Bus[EventBridge] Connection is healthy, EventBusArn: %s', 
+                        log.info('Event Bus[EventBridge] Connection is healthy, EventBusArn: %s',
                                  response['Arn'])
 
         except Exception as e:
@@ -123,10 +136,11 @@ class EventBridgeResourceHandler(ResourceHandler):
     async def probe(self):
         try:
             response = await self.events_client.describe_event_bus()
-            log.info('Event Bus[EventBridge] Connection is healthy, EventBusArn: %s', 
+            log.info('Event Bus[EventBridge] Connection is healthy, EventBusArn: %s',
                      response['Arn'])
         except Exception as e:
-            log.error(f'Event Bus[EventBridge] Connection Error: %s', e.__str__())
+            log.error(
+                f'Event Bus[EventBridge] Connection Error: %s', e.__str__())
             await self.initial()
 
     async def close(self):
