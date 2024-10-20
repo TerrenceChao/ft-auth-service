@@ -26,16 +26,16 @@ package:
 provider:
   name: aws
   runtime: python3.10
-  region: ${opt:region, "ap-northeast-1"}
-  stage: ${opt:stage, "dev"}
+  region: ${env:THE_REGION} # ${opt:region, "ap-northeast-1"}
+  stage: ${env:STAGE} # ${opt:stage, "dev"}
   iamRoleStatements:
   - Effect: Allow
     Action:
     - dynamodb:*
     Resource:
-    - arn:aws:dynamodb:ap-northeast-1:549734764220:table/auth
-    - arn:aws:dynamodb:ap-northeast-1:549734764220:table/accounts
-    - arn:aws:dynamodb:ap-northeast-1:549734764220:table/account_indexs
+    - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_AUTH}
+    - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_ACCOUNT}
+    - arn:aws:dynamodb:${env:THE_REGION}:${env:ACCOUNT_ID}:table/${env:TABLE_ACCOUNT_INDEX}
 
   - Effect: Allow
     Action:
@@ -46,15 +46,15 @@ provider:
     - "s3:List*"
     - "s3:AbortMultipartUpload"
     Resource:
-    - "arn:aws:s3:::foreign-teacher"
-    - "arn:aws:s3:::foreign-teacher/*"
+    - "arn:aws:s3:::${env:S3_BUCKET}"
+    - "arn:aws:s3:::${env:S3_BUCKET}/*"
 
   - Effect: Allow
     Action:
     - ses:SendEmail
     Resource:
-    - arn:aws:ses:ap-northeast-1:549734764220:identity/*
-    - arn:aws:ses:ap-northeast-1:549734764220:configuration-set/*
+    - arn:aws:ses:${env:THE_REGION}:${env:ACCOUNT_ID}:identity/*
+    - arn:aws:ses:${env:THE_REGION}:${env:ACCOUNT_ID}:configuration-set/*
 
 
 custom:
