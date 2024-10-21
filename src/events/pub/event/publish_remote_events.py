@@ -15,14 +15,14 @@ async def publish_remote_user_registration(signup_data: evt.SignupVO):
 
 async def publish_remote_user_login(user_data: Any):
     # TODO: Preprocessing ...
-    # await publish_remote_event(pub_event)
     log.info('TODO: implement publish_remote_user_login ..')
+    # await publish_remote_event(pub_event)
 
 
 async def publish_remote_update_passowrd(sensitive_data: Any):
     # TODO: Preprocessing ...
-    # await publish_remote_event(pub_event)
     log.info('TODO: implement publish_remote_update_passowrd ..')
+    # await publish_remote_event(pub_event)
 
 
 

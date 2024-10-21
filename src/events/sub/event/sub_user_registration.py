@@ -1,4 +1,5 @@
 from ....configs.conf import MAX_RETRY
+from ....configs.constants import SubEventStatus
 from ....models.event_vos import *
 from ....models.auth_value_objects import *
 from ....configs.adapters import *
@@ -16,6 +17,7 @@ async def subscribe_user_registration(event: SubEventDetailVO):
                  event.dict(), event.status.value)
         signup_vo = SignupVO.parse_obj(event.metadata)
 
+        # main logic
         await auth_svc.duplicate_account_by_registered_region(
             signup_vo.auth,
             signup_vo.account,
@@ -29,6 +31,15 @@ async def subscribe_user_registration(event: SubEventDetailVO):
         await event.call_ack()
 
     except Exception as e:
+        if event.status == SubEventStatus.COMPLETED:
+            log.warning('duplicate_account success but append log fail. event: %s',
+                        event.dict())
+            await event.call_ack()
+            await alert_svc.exception_alert('[sub] event log writing fail.', e)
+            return
+
+
+        # dealing with the real sub-event retry process
         log.error('subscribe_user_registration error: %s', e)
         event.need_retry()
         if event.retry > MAX_RETRY:

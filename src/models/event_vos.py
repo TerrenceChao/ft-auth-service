@@ -21,7 +21,7 @@ class EventDetailVO(BaseModel):
 
 
 class PubEventDetailVO(EventDetailVO):
-    status: PubEventStatus = PubEventStatus.READY # TODO: apply [enum.value: str]???
+    status: PubEventStatus = PubEventStatus.READY
 
     def ready(self) -> 'PubEventDetailVO':
         self.status = PubEventStatus.READY
@@ -43,7 +43,7 @@ class PubEventDetailVO(EventDetailVO):
 
 
 class SubEventDetailVO(EventDetailVO):
-    status: SubEventStatus = SubEventStatus.SUBSCRIBED # TODO: apply [enum.value: str]???
+    status: SubEventStatus = SubEventStatus.SUBSCRIBED
     ack: Optional[Callable] = None
 
     def subscribed(self) -> 'SubEventDetailVO':
