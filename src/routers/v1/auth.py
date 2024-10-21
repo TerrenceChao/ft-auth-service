@@ -8,7 +8,7 @@ from ...configs.adapters import *
 from ...events.pub.event.publish_remote_events import (
     publish_remote_user_registration_task,
     # publish_remote_user_login_task,
-    # publish_remote_update_passowrd_task,
+    publish_remote_update_passowrd_task,
 )
 from ...infra.utils.auth_util import get_public_key
 from ...infra.db.nosql.auth_repository import AuthRepository
@@ -107,15 +107,22 @@ async def login(
 
 @router.put('/password/update')
 async def update_password(
+    bg_task: BackgroundTasks,
     payload: ResetPasswordPayload,
     # auth_db: Any = Depends(get_db),
 ):
-    await auth_service.update_password(
+    sensitive_data = await auth_service.update_password(
         auth_db, 
         payload.register_email, 
         payload.password1, 
         payload.origin_password
     )
+    # publish event to remote regions
+    publish_remote_update_passowrd_task(
+        bg_task=bg_task, 
+        sensitive_data=sensitive_data,
+    )
+
     return res_success(msg='password modified')
 
 

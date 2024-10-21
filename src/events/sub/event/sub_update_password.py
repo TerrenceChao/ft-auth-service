@@ -18,7 +18,7 @@ async def subscribe_update_password(event: SubEventDetailVO):
         pass_params = UpdatePasswordDTO.parse_obj(event.metadata)
 
         # main logic
-        await auth_svc.update_password_from_remote_region(
+        await auth_svc.update_password_by_remote_event(
             db=auth_db,
             params=pass_params,
         )
@@ -35,7 +35,6 @@ async def subscribe_update_password(event: SubEventDetailVO):
             await event.call_ack()
             await alert_svc.exception_alert('[sub] event log writing fail.', e)
             return
-
 
         # dealing with the real sub-event retry process
         log.error('subscribe_update_password error: %s', e)

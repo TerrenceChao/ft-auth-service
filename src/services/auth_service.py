@@ -5,10 +5,9 @@ import hashlib
 import uuid
 
 from src.configs.constants import AccountType
-from ..repositories.auth_repository import IAuthRepository, UpdatePasswordParams
+from ..repositories.auth_repository import IAuthRepository
 from ..repositories.object_storage import IObjectStorage
-from ..models.auth_value_objects import AccountVO
-from ..models.event_vos import SignupVO
+from ..models.auth_value_objects import *
 from ..infra.db.nosql.auth_schemas import FTAuth, Account
 from ..infra.utils import auth_util
 from ..infra.client.email import EmailClient
@@ -25,7 +24,6 @@ class AuthService:
         self.obj_storage = obj_storage
         self.email = email
         self.__cls_name = self.__class__.__name__
-
 
     async def send_conform_code_by_email(
         self,
@@ -47,7 +45,7 @@ class AuthService:
         except ServerError as e:
             log.error(f'{self.__cls_name}.send_conform_code_by_email [lack with account_data] \
                 email:%s, confirm_code:%s, sendby:%s, res:%s, err:%s',
-                email, confirm_code, sendby, res, e.__str__())
+                      email, confirm_code, sendby, res, e.__str__())
             raise ServerException(msg='incomplete_registered_user_information')
 
         try:
@@ -65,13 +63,12 @@ class AuthService:
                         await self.email.send_conform_code(email=email, confirm_code=confirm_code)
                     return 'email_sent'
                 raise DuplicateUserException(msg='email_registered')
-        
+
         except Exception as e:
             log.error(f'{self.__cls_name}.send_code_by_email [email sending error] \
                 email:%s, confirm_code:%s, sendby:%s, res:%s, err:%s',
-                email, confirm_code, sendby, res, e.__str__())
+                      email, confirm_code, sendby, res, e.__str__())
             raise_http_exception(e=e, msg=e.msg if e.msg else 'unknow_error')
-
 
     '''
     註冊流程
@@ -79,6 +76,7 @@ class AuthService:
         2. 產生帳戶資料
         3. 將帳戶資料寫入 DB
     '''
+
     async def signup(
         self,
         email: EmailStr,
@@ -100,23 +98,23 @@ class AuthService:
             # 3. 將帳戶資料寫入 DB
             signup_vo = await self.save_account_data(auth, account, auth_db, account_db)
             return signup_vo
-        
+
         except ClientException as e:
             raise ClientException(msg=e.msg, data=e.data)
-        
+
         except NotAcceptableException as e:
             raise NotAcceptableException(msg=e.msg, data=e.data)
-        
+
         except DuplicateUserException as e:
             raise DuplicateUserException(msg=e.msg, data=e.data)
-        
+
         except ServerException as e:
             raise ServerException(msg=e.msg, data=e.data)
-        
+
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [unknown_err] \
                 email:%s, data:%s, err:%s',
-                email, data, e.__str__())
+                      email, data, e.__str__())
             raise ServerException(msg='unknown_err')
 
     '''
@@ -124,6 +122,7 @@ class AuthService:
         1. 驗證登入資訊
         2. 取得帳戶資料
     '''
+
     async def login(
         self,
         email: EmailStr,
@@ -144,62 +143,62 @@ class AuthService:
             aid = auth['aid']
             account_vo = await self.find_account(aid, account_db)
             return account_vo
-        
+
         except ClientException as e:
             raise ClientException(msg=e.msg, data=e.data)
-        
+
         except UnauthorizedException as e:
             raise UnauthorizedException(msg=e.msg, data=e.data)
-        
+
         except ForbiddenException as e:
             # important! 'region' in S3 needs to be returned
             raise ForbiddenException(msg=e.msg, data=e.data)
-        
+
         except NotFoundException as e:
             raise NotFoundException(msg=e.msg, data=e.data)
-        
+
         except NotAcceptableException as e:
             raise NotAcceptableException(msg=e.msg, data=e.data)
-        
+
         except ServerException as e:
             raise ServerException(msg=e.msg, data=e.data)
-        
+
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [unknown_err] \
                 email:%s, data:%s, err:%s',
-                email, data, e.__str__())
+                      email, data, e.__str__())
             raise ServerException(msg='unknown_err')
-    
 
     async def update_password(
         self, db: Any, email: EmailStr, new_pw: str, origin_pw: Optional[str] = None
-    ) -> (bool):
+    ) -> (UpdatePasswordDTO):
         try:
             pass_salt = auth_util.gen_pass_salt()
-            params = UpdatePasswordParams(
+            params = UpdatePasswordDTO(
                 email=email,
                 pass_salt=pass_salt,
                 pass_hash=auth_util.gen_password_hash(new_pw, pass_salt),
             )
-            
+
             if origin_pw:
                 account_data = await self.auth_repo.find_auth(db=db, email=email)
                 if account_data is None:
                     raise NotFoundException(msg='user_not_found')
-                
+
                 if not auth_util.match_password(
                     pass_hash=account_data['pass_hash'], pw=origin_pw, pass_salt=account_data['pass_salt']
                 ):
-                    raise ForbiddenException(msg='Invalid Password') 
+                    raise ForbiddenException(msg='Invalid Password')
 
-            return await self.auth_repo.update_password(db=db, update_password_params=params)
-        
+            await self.auth_repo.update_password(db=db, update_password_params=params)
+            return params
+
         except NotFoundException as e:
             raise NotFoundException(msg=e.msg)
-        
+
         except ForbiddenException as e:
             raise ForbiddenException(msg=e.msg)
-        
+
         except Exception as e:
             log.error(f'{self.__cls_name}.update_password [unknown_err] \
                 params:%s, err:%s', params, e.__str__())
@@ -213,12 +212,19 @@ class AuthService:
         await self.email.send_reset_password_comfirm_email(email=email, token=token)
         return token
 
-
+    async def update_password_by_remote_event(self, db: Any, params: UpdatePasswordDTO):
+        try:
+            await self.auth_repo.update_password(db=db, update_password_params=params)
+        except Exception as e:
+            log.error(f'{self.__cls_name}.update_password_by_remote_event [unknown_err] \
+                params:%s, err:%s', params, e.__str__())
+            raise_http_exception(e, msg='unknown_err')
 
     '''
     檢查 email 有沒註冊過
         去 S3 檢查 email 有沒註冊過，若沒有 則先寫入 email + version
     '''
+
     async def __check_if_email_is_registered(self, email: EmailStr):
         # Is the email registered with S3?
         email_info = await self.obj_storage.find(bucket=email)
@@ -236,6 +242,7 @@ class AuthService:
             檢查 version, 將 email + register_region 覆寫至 S3
         2. 產生 DynamoDB 需要的帳戶資料
     '''
+
     async def __generate_account_data(self, email: EmailStr, data: Any, version: str):
         # 1. 更新 email 資料到 S3
         region = data['region']
@@ -245,7 +252,7 @@ class AuthService:
         # 2. 產生 DynamoDB 需要的帳戶資料
         data['email'] = email
         auth, account = auth_util.gen_account_data(data, AccountType.FT)
-        return (auth, account) # all good!
+        return (auth, account)  # all good!
 
     '''
     將帳戶資料寫入 DB
@@ -255,9 +262,10 @@ class AuthService:
             a. 先嘗試刪除 DynamoDB
             b. 再嘗試刪除 S3
     '''
+
     async def save_account_data(
         self,
-        auth: FTAuth, 
+        auth: FTAuth,
         account: Account,
         auth_db: Any,
         account_db: Any,
@@ -272,29 +280,29 @@ class AuthService:
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [db_create_err] \
                 auth:%s, account:%s, res:%s, err:%s',
-                auth, account, res, e.__str__())
-            
+                      auth, account, res, e.__str__())
+
             # 2. 錯誤處理..
             try:
                 await self.auth_repo.delete_account(
-                        auth_db=auth_db, account_db=account_db, auth=auth)
+                    auth_db=auth_db, account_db=account_db, auth=auth)
                 await self.obj_storage.delete(bucket=auth.email)
 
             except Exception as e:
                 log.error(f'{self.__cls_name}.signup [rollback_err] \
                     auth:%s, account:%s, res:%s, err:%s',
-                    auth, account, res, e.__str__())
+                          auth, account, res, e.__str__())
                 raise ServerException(msg='rollback_err')
 
             raise ServerException(msg='db_create_err')
 
-
     '''
     從註冊地同步用戶資料: 將帳戶資料寫入 DynamoDB
     '''
+
     async def duplicate_account_by_registered_region(
         self,
-        auth: FTAuth, 
+        auth: FTAuth,
         account: Account,
         auth_db: Any,
         account_db: Any,
@@ -303,22 +311,22 @@ class AuthService:
         try:
             # 1. 檢查 email 有沒註冊過
             user = await self.auth_repo.get_account_by_email(
-                auth_db=auth_db, 
-                account_db=account_db, 
-                email=auth.email, 
+                auth_db=auth_db,
+                account_db=account_db,
+                email=auth.email,
                 fields=['aid'])
-            
+
             # 2. 若為新用戶，將資料寫入 DynamoDB
             if not user:
                 (auth, account) = await self.auth_repo.create_account(
                     auth_db=auth_db, account_db=account_db, auth=auth, account=account)
-                
-            res = SignupVO(auth=auth, account=account) # all good!
+
+            res = SignupVO(auth=auth, account=account)  # all good!
 
         except Exception as e:
             log.error(f'{self.__cls_name}.signup [db_create_err] \
                 auth:%s, account:%s, err:%s',
-                auth, account, e.__str__())
+                      auth, account, e.__str__())
 
             # 3. 錯誤處理..
             try:
@@ -328,14 +336,12 @@ class AuthService:
             except Exception as e:
                 log.error(f'{self.__cls_name}.signup [rollback_err] \
                     auth:%s, account:%s, err:%s',
-                    auth, account, e.__str__())
+                          auth, account, e.__str__())
                 raise ServerException(msg='rollback_err')
 
             raise ServerException(msg='db_create_err')
 
         return res
-
-
 
     '''
     驗證登入資訊
@@ -344,6 +350,7 @@ class AuthService:
         3. validation password
         4. return auth
     '''
+
     async def __validation(
         self,
         email: EmailStr,
@@ -353,7 +360,7 @@ class AuthService:
     ):
         # 1. 從 DynamoDB (auth) 取得 auth
         auth = await self.auth_repo.find_auth(db=auth_db, email=email)
-        
+
         # 2. not found 錯誤處理
         if auth is None:
             email_info = await self.obj_storage.find(bucket=email)
@@ -371,9 +378,9 @@ class AuthService:
                 # 這結果 超級有問題!!!
                 log.error(f'{self.__cls_name}.login [register_fail]!!! \
                     email:%s, auth:%s, email_info:%s',
-                    email, auth, email_info)
+                          email, auth, email_info)
                 raise ServerException(msg='register_fail')
-            
+
         # 3. validation password
         pass_hash = auth['pass_hash']
         pass_salt = auth['pass_salt']
@@ -387,6 +394,7 @@ class AuthService:
     取得帳戶資料
         從 DynamoDB (accounts) 取得必要的帳戶資料
     '''
+
     async def find_account(self, aid: str, account_db: Any):
         res = await self.auth_repo.find_account(db=account_db, aid=aid)
         if res is None:

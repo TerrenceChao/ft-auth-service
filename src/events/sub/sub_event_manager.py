@@ -2,7 +2,8 @@ import json
 from typing import Dict, Callable
 from ...configs.constants import BusinessEventType
 from ...configs.exceptions import ServerException
-from .event.sub_user_registration import *
+from ...models.event_vos import SubEventDetailVO
+from .event import *
 from ..pub.event.publish_remote_events import *
 import logging
 
@@ -52,8 +53,21 @@ sub_remote_event_manager = SubscribeEventManager(
     'Subscribe event bus from remote regions',
     {
         BusinessEventType.USER_REGISTRATION.value: subscribe_user_registration,
-        BusinessEventType.USER_LOGIN.value: None,  # TODO: pending...
-        BusinessEventType.UPDATE_PASSWORD.value: None,  # TODO: pending...
+        # TODO: pending...
+        BusinessEventType.USER_LOGIN.value: None,
+        BusinessEventType.UPDATE_PASSWORD.value: subscribe_update_password,
+    })
+
+
+# Subscribe SQS for retry failed subscribe events (DEAL LETTER QUEUE)
+retry_sub_event_manager = SubscribeEventManager(
+    'Subscribe msgs for retry failed subscribe events(DLQ)',
+    {
+        # retry failed subscribed events
+        BusinessEventType.USER_REGISTRATION.value: subscribe_user_registration,
+        # TODO: pending...
+        # BusinessEventType.USER_LOGIN.value: None,
+        BusinessEventType.UPDATE_PASSWORD.value: subscribe_update_password,
     })
 
 
@@ -67,15 +81,4 @@ retry_pub_event_manager = SubscribeEventManager(
         BusinessEventType.USER_LOGIN.value: publish_remote_user_login,
         # TODO: pending...
         BusinessEventType.UPDATE_PASSWORD.value: publish_remote_update_passowrd,
-    })
-
-
-# Subscribe SQS for retry failed subscribe events (DEAL LETTER QUEUE)
-retry_sub_event_manager = SubscribeEventManager(
-    'Subscribe msgs for retry failed subscribe events(DLQ)',
-    {
-        # retry failed subscribed events
-        BusinessEventType.USER_REGISTRATION.value: subscribe_user_registration,
-        # BusinessEventType.USER_LOGIN.value: None,     # TODO: pending...
-        # BusinessEventType.UPDATE_PASSWORD.value: None,    # TODO: pending...
     })

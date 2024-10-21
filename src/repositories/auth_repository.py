@@ -3,11 +3,12 @@ from decimal import Decimal
 from typing import Dict, List, Any, Optional, Tuple
 from pydantic import EmailStr, BaseModel
 from ..infra.db.nosql.auth_schemas import *
+from ..models.auth_value_objects import UpdatePasswordDTO
 
-class UpdatePasswordParams(BaseModel):
-    pass_hash: str
-    pass_salt: str
-    email: EmailStr
+# class UpdatePasswordParams(BaseModel):
+#     pass_hash: str
+#     pass_salt: str
+#     email: EmailStr
 
 
 class IAuthRepository(ABC):
@@ -37,5 +38,5 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    async def update_password(self, db: Any, update_password_params: UpdatePasswordParams):
+    async def update_password(self, db: Any, update_password_params: UpdatePasswordDTO):
         pass

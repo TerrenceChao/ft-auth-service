@@ -55,8 +55,6 @@ class UpdatePasswordDTO(BaseModel):
         return PubEventDetailVO(
             event_id=gen_snowflake_id(),
             event_type=BusinessEventType.UPDATE_PASSWORD.value,
-            metadata={
-                'password_dto': self.dict(),
-            },
+            metadata=self.dict(),
             status=PubEventStatus.READY,
         )
