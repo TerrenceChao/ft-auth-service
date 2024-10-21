@@ -1,0 +1,2 @@
+from .sub_user_registration import subscribe_user_registration
+from .sub_update_password import subscribe_update_password
