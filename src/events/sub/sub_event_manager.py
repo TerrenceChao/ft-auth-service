@@ -54,7 +54,7 @@ sub_remote_event_manager = SubscribeEventManager(
     {
         BusinessEventType.USER_REGISTRATION.value: subscribe_user_registration,
         # TODO: pending...
-        BusinessEventType.USER_LOGIN.value: None,
+        # BusinessEventType.USER_LOGIN.value: None,
         BusinessEventType.UPDATE_PASSWORD.value: subscribe_update_password,
     })
 

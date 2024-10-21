@@ -47,19 +47,19 @@ HTTP_KEEPALIVE_EXPIRY = float(os.getenv("KEEPALIVE_EXPIRY", 30.0))
 # FB App conf
 FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID', '829288179205024')
 FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET', '0de1fb7a89306e010a538ef8e9da0728')
-FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI', 'http://localhost:8006/api/v2/dev_auth/fb/login')
+FACEBOOK_REDIRECT_URI = os.getenv('FACEBOOK_REDIRECT_URI', 'http://localhost:8006/api/v2/auth/fb/login')
 
 # Google App conf
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '652252489794-hf50ke4tqvp39hf27tbpfi06evsttuh8.apps.googleusercontent.com')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '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')
-GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8006/api/v2/dev_auth/google/login')
+GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8006/api/v2/auth/google/login')
 
 
 # email conf
 EMAIL_SENDER = os.getenv('EMAIL_SENDER', 'rtyufjvbn@gmail.com')
 EMAIL_VERIFY_CODE_TEMPLATE = os.getenv('EMAIL_VERIFY_CODE_TEMPLATE', None)
 EMAIL_RESET_PASSWORD_TEMPLATE = os.getenv('EMAIL_RESET_PASSWORD_TEMPLATE', None)
-FRONTEND_RESET_PASSWORD_URL = os.getenv('FRONTEND_RESET_PASSWORD_URL', 'https://localhost:8002/dev_auth/reset_password?token=')
+FRONTEND_RESET_PASSWORD_URL = os.getenv('FRONTEND_RESET_PASSWORD_URL', 'https://localhost:8002/auth/reset_password?token=')
 SES_CONNECT_TIMEOUT = int(os.getenv("SES_CONNECT_TIMEOUT", 10))
 SES_READ_TIMEOUT = int(os.getenv("SES_READ_TIMEOUT", 10))
 SES_MAX_ATTEMPTS = int(os.getenv("SES_MAX_ATTEMPTS", 3))

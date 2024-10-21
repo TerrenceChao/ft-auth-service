@@ -128,7 +128,8 @@ class EventRepository(IEventRepository):
     async def get_last_event_times(self, client: Any, event_id: int) -> Tuple[int, int]:
         response = await client.get_item(
             TableName=TABLE_EVENT,
-            Key={'event_id': event_id}
+            Key={'event_id': event_id},
+            ProjectionExpression='created_at, updated_at',
         )
         if 'Item' in response:
             item = dict(response['Item'])
