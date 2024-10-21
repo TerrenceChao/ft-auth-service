@@ -21,7 +21,7 @@ class EventDetailVO(BaseModel):
 
 
 class PubEventDetailVO(EventDetailVO):
-    status: PubEventStatus = PubEventStatus.READY # TODO: apply [enum.value: str]???
+    status: PubEventStatus = PubEventStatus.READY
 
     def ready(self) -> 'PubEventDetailVO':
         self.status = PubEventStatus.READY
@@ -43,7 +43,7 @@ class PubEventDetailVO(EventDetailVO):
 
 
 class SubEventDetailVO(EventDetailVO):
-    status: SubEventStatus = SubEventStatus.SUBSCRIBED # TODO: apply [enum.value: str]???
+    status: SubEventStatus = SubEventStatus.SUBSCRIBED
     ack: Optional[Callable] = None
 
     def subscribed(self) -> 'SubEventDetailVO':
@@ -67,35 +67,3 @@ class SubEventDetailVO(EventDetailVO):
         original_dict = super().dict()
         original_dict['status'] = original_dict['status'].value  # 轉換 Enum 為其值
         return original_dict
-
-
-# 模擬 signup 當下註冊時的運作
-class SignupVO(BaseModel):
-    auth: FTAuth
-    account: Account
-
-    @classmethod
-    def parse_obj(cls: Type['SignupVO'], obj: Any) -> 'SignupVO':
-        obj = super().parse_obj(obj)
-        obj.auth = FTAuth.parse_obj(obj.auth)
-        obj.account = Account.parse_obj(obj.account)
-        return obj
-
-
-    def pub_event(self) -> (PubEventDetailVO):
-        return PubEventDetailVO(
-            event_id=gen_snowflake_id(),
-            event_type=BusinessEventType.USER_REGISTRATION.value,
-            metadata={
-                'auth': self.auth.dict(),
-                'account': self.account.dict(),
-            },
-            status=PubEventStatus.READY,
-        )
-
-    
-    # filter sensitive data
-    def to_account(self):
-        account_vo = self.account
-        account_vo.email2 = None
-        return account_vo

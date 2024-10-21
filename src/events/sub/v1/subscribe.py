@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Body
 from ..sub_event_manager import sub_remote_event_manager
 from ....configs.conf import LOCAL_REGION
 import logging
@@ -15,6 +15,10 @@ router = APIRouter(
 )
 
 '''
+update password event
+{ "version": "0", "id": "91bb96ab-1bf4-472e-e92d-c80ab851ad4c", "detail-type": "TestEvent", "source": "ft.test", "account": "549734764220", "time": "2024-10-18T10:45:39Z", "region": "ap-northeast-1", "resources": [], "detail": { "event_id": 7254074203903853, "event_type": "update_password", "metadata": { "password_dto": {"email": "user1@example.com", "pass_hash": "ea32b45be89c97435f9de68b7060e99b556644364addb8ee967f6533", "pass_salt": "irwhc7uz7zth"} }, "retry": 0, "region": "ap" } }
+
+user registration event
 {
     "version": "0",
     "id": "91bb96ab-1bf4-472e-e92d-c80ab851ad4c",
@@ -59,8 +63,7 @@ router = APIRouter(
 
 
 @router.post('/remote-events')
-async def receive_remote_event(request: Request):
-    event = await request.json()
+async def receive_remote_event(event: dict = Body(...)):
     log.info('Received Remote Event: %s', json.dumps(event, indent=2))
 
     # 在這裡處理事件邏輯

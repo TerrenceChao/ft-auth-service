@@ -10,37 +10,34 @@ log = logging.getLogger(__name__)
 
 
 # no testable
-async def subscribe_user_registration(event: SubEventDetailVO):
+async def subscribe_update_password(event: SubEventDetailVO):
     try:
         event.subscribed()
-        log.info('subscribe_user_registration: %s, status: %s',
+        log.info('subscribe_update_password: %s, status: %s',
                  event.dict(), event.status.value)
-        signup_vo = SignupVO.parse_obj(event.metadata)
+        pass_params = UpdatePasswordDTO.parse_obj(event.metadata)
 
         # main logic
-        await auth_svc.duplicate_account_by_registered_region(
-            signup_vo.auth,
-            signup_vo.account,
-            auth_db,
-            account_db,
+        await auth_svc.update_password_by_remote_event(
+            db=auth_db,
+            params=pass_params,
         )
         event.completed()
         await event_repo.append_sub_event_log(event)
-        log.info('subscribe_user_registration and create signup data success %s, status: %s',
-                 signup_vo.dict(), event.status.value)
+        log.info('subscribe_update_password and update password success %s, status: %s',
+                 pass_params.dict(), event.status.value)
         await event.call_ack()
 
     except Exception as e:
         if event.status == SubEventStatus.COMPLETED:
-            log.warning('duplicate_account success but append log fail. event: %s',
+            log.warning('update password success but append log fail. event: %s',
                         event.dict())
             await event.call_ack()
             await alert_svc.exception_alert('[sub] event log writing fail.', e)
             return
 
-
         # dealing with the real sub-event retry process
-        log.error('subscribe_user_registration error: %s', e)
+        log.error('subscribe_update_password error: %s', e)
         event.need_retry()
         if event.retry > MAX_RETRY:
             await alert_svc.exceed_retry_alert('retry event exceeds the max retry', event.retry)
@@ -51,7 +48,7 @@ async def subscribe_user_registration(event: SubEventDetailVO):
 
             # publish to dead letter queue & retry
             await failed_subscribed_events_dlq.publish_message(event.payload())
-            log.info('[subscribe_user_registration] send failed sub event to DLQ: %s, status: %s',
+            log.info('[subscribe_update_password] send failed sub event to DLQ: %s, status: %s',
                      event.dict(), event.status.value)
             await event.call_ack()
 

@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv
 
 # stage
 TESTING = os.getenv("TESTING", "dev")
@@ -18,16 +17,17 @@ TOKEN_EXPIRE_TIME = int(os.getenv('TOKEN_EXPIRE_TIME', 60 * 60 * 24 * 30))
 DDB_CONNECT_TIMEOUT = int(os.getenv("DDB_CONNECT_TIMEOUT", 20))
 DDB_READ_TIMEOUT = int(os.getenv("DDB_READ_TIMEOUT", 30))
 DDB_MAX_ATTEMPTS = int(os.getenv("DDB_MAX_ATTEMPTS", 5))
+DDB_PREFIX = os.getenv('DDB_PREFIX', '') # ft_dev_
 
 # db table conf
-TABLE_AUTH = os.getenv('TABLE_AUTH', 'auth')
-TABLE_ACCOUNT = os.getenv('TABLE_ACCOUNT', 'accounts')
-TABLE_ACCOUNT_INDEX = os.getenv('TABLE_ACCOUNT_INDEX', 'account_indexs')
+TABLE_AUTH = DDB_PREFIX + os.getenv('TABLE_AUTH', 'auth')
+TABLE_ACCOUNT = DDB_PREFIX + os.getenv('TABLE_ACCOUNT', 'accounts')
+TABLE_ACCOUNT_INDEX = DDB_PREFIX + os.getenv('TABLE_ACCOUNT_INDEX', 'account_indexs')
 BATCH_LIMIT = int(os.getenv('BATCH_LIMIT', '20'))
 
 # db log table conf
-TABLE_EVENT = os.getenv('TABLE_EVENT', 'auth_event_dev')
-TABLE_EVENT_LOG = os.getenv('TABLE_EVENT_LOG', 'auth_event_log_dev')
+TABLE_EVENT = DDB_PREFIX + os.getenv('TABLE_EVENT', 'auth_event')
+TABLE_EVENT_LOG = DDB_PREFIX + os.getenv('TABLE_EVENT_LOG', 'auth_event_log')
 MAX_RETRY = int(os.getenv('MAX_RETRY', 3))
 
 # s3 conf
@@ -58,10 +58,8 @@ GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8006/ap
 # email conf
 EMAIL_SENDER = os.getenv('EMAIL_SENDER', 'rtyufjvbn@gmail.com')
 EMAIL_VERIFY_CODE_TEMPLATE = os.getenv('EMAIL_VERIFY_CODE_TEMPLATE', None)
-EMAIL_RESET_PASSWORD_TEMPLATE = os.getenv(
-    'EMAIL_RESET_PASSWORD_TEMPLATE', None)
-FRONTEND_RESET_PASSWORD_URL = os.getenv(
-    'FRONTEND_RESET_PASSWORD_URL', 'https://localhost:8002/auth/reset_password?token=')
+EMAIL_RESET_PASSWORD_TEMPLATE = os.getenv('EMAIL_RESET_PASSWORD_TEMPLATE', None)
+FRONTEND_RESET_PASSWORD_URL = os.getenv('FRONTEND_RESET_PASSWORD_URL', 'https://localhost:8002/auth/reset_password?token=')
 SES_CONNECT_TIMEOUT = int(os.getenv("SES_CONNECT_TIMEOUT", 10))
 SES_READ_TIMEOUT = int(os.getenv("SES_READ_TIMEOUT", 10))
 SES_MAX_ATTEMPTS = int(os.getenv("SES_MAX_ATTEMPTS", 3))

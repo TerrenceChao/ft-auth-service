@@ -1,4 +1,5 @@
 from ....configs.conf import MAX_RETRY
+from ....configs.constants import PubEventStatus
 from ....models.event_vos import PubEventDetailVO
 from ....configs.adapters import (
     event_bus_adapter as event_bus,
@@ -35,6 +36,14 @@ async def publish_remote_event(event: PubEventDetailVO):
                  event.dict(), event.status.value)
 
     except Exception as e:
+        if event.status == PubEventStatus.PUBLISHED:
+            log.warning('publish success but append log fail. event: %s',
+                        event.dict())
+            await alert_svc.exception_alert('[pub] event log writing fail.', e)
+            return
+
+
+        # dealing with the real pub-event retry process
         log.error('publish_remote_event error: %s', e)
         event.need_retry()
         if event.retry > MAX_RETRY:

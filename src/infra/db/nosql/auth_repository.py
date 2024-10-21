@@ -9,7 +9,8 @@ from .ddb_error_handler import *
 from ....configs.conf import TABLE_AUTH, TABLE_ACCOUNT, TABLE_ACCOUNT_INDEX, BATCH_LIMIT
 from ....configs.constants import DYNAMODB_KEYWORDS
 from ....configs.exceptions import *
-from ....repositories.auth_repository import IAuthRepository, UpdatePasswordParams
+from ....repositories.auth_repository import IAuthRepository
+from ....models.auth_value_objects import UpdatePasswordDTO
 import logging as log
 
 log.basicConfig(filemode='w', level=log.INFO)
@@ -283,7 +284,7 @@ class AuthRepository(IAuthRepository):
 
 
     async def update_password(
-        self, db: Any, update_password_params: UpdatePasswordParams
+        self, db: Any, update_password_params: UpdatePasswordDTO
     ) -> (bool):
         res = None
         try:
