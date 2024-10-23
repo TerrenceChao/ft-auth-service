@@ -304,7 +304,7 @@ class AuthRepository(IAuthRepository):
                 ReturnValues='ALL_NEW',
             )
             if 'Attributes' in res:
-                # TODO: 123 return "role_id" for table: account_indexs
+                # NOTE: return "role_id" for table: account_indexs
                 return FTAuth.parse_obj(res['Attributes'])
             else:
                 raise Exception('update_password_fail')

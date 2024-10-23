@@ -14,7 +14,6 @@ log = logging.getLogger(__name__)
 
 async def publish_remote_user_registration(signup_data: SignupVO):
     log.info('publishing remote_user_registration event ..')
-    # TODO: 123 啥時給 role_id?
     pub_event: PubEventDetailVO = signup_data.pub_event()
     await publish_remote_event(pub_event)
 
@@ -27,7 +26,6 @@ async def publish_remote_user_login(user_data: Any):
 
 async def publish_remote_update_passowrd(sensitive_data: UpdatePasswordDTO):
     log.info('publishing remote_update_passowrd event ..')
-    # TODO: 123 啥時給 role_id?
     pub_event: PubEventDetailVO = sensitive_data.pub_event()
     await publish_remote_event(pub_event)
 

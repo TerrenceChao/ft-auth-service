@@ -23,7 +23,6 @@ async def subscribe_update_password(event: SubEventDetailVO):
             params=pass_params,
         )
         event.completed()
-        # TODO: 123 啥時給 role_id?
         await event_repo.append_sub_event_log(event)
         log.info('subscribe_update_password and update password success %s, status: %s',
                  pass_params.dict(), event.status.value)

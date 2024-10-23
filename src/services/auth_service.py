@@ -97,7 +97,6 @@ class AuthService:
 
             # 3. 將帳戶資料寫入 DB
             signup_vo = await self.save_account_data(auth, account, auth_db, account_db)
-            # TODO: 123 啥時給 role_id?
             return signup_vo
 
         except ClientException as e:
@@ -192,7 +191,6 @@ class AuthService:
                     raise ForbiddenException(msg='Invalid Password')
 
             auth: FTAuth = await self.auth_repo.update_password(db=db, update_password_params=params)
-            # TODO: 123 啥時給 role_id?
             return params.set_role_id(role_id=auth.role_id)
 
         except NotFoundException as e:

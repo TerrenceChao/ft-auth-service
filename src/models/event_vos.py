@@ -6,7 +6,6 @@ from ..infra.utils.auth_util import gen_snowflake_id
 
 
 class EventDetailVO(BaseModel):
-    # TODO: 123 啥時給 role_id?
     event_id: int
     event_type: str
     role_id: int
@@ -15,7 +14,6 @@ class EventDetailVO(BaseModel):
 
     def payload(self) -> 'EventDetailVO':
         return EventDetailVO.parse_obj({
-            # TODO: 123 啥時給 role_id?
             'event_id': self.event_id,
             'event_type': self.event_type,
             'role_id': self.role_id,
