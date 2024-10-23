@@ -95,6 +95,12 @@ class AuthRepository(IAuthRepository):
         response = None
         auth_dict: Dict = auth.create_ts().dict()
         account_dict: Dict = account.create_ts().dict()
+        account_index: AccountIndex = AccountIndex(
+            role_id=auth.role_id,
+            aid=auth.aid,
+            event_id=0,
+        )
+        account_index_dict: Dict = account_index.create_ts().dict()
 
         try:
             _db = await account_db.access()
@@ -118,10 +124,7 @@ class AuthRepository(IAuthRepository):
                     {
                         'Put': {
                             'TableName': TABLE_ACCOUNT_INDEX,
-                            'Item': {
-                                'role_id': account.role_id,
-                                'aid': account.aid,
-                            },
+                            'Item': account_index_dict,
                             'ConditionExpression': 'attribute_not_exists(role_id) AND attribute_not_exists(aid)',
                         }
                     },
@@ -134,14 +137,14 @@ class AuthRepository(IAuthRepository):
 
         except ClientError as e:
             log.error(f'{self.__cls_name}.create_account error [insert_req_error], \
-                auth:%s, account:%s, response:%s, err:%s',
-                auth, account, response, client_err_msg(e))
+                auth:%s, account:%s, account_index:%s, response:%s, err:%s',
+                auth, account, account_index, response, client_err_msg(e))
             raise Exception('insert_req_error')
 
         except Exception as e:
             log.error(f'{self.__cls_name}.create_account error [db_insert_error], \
-                auth:%s, account:%s, response:%s, err:%s',
-                auth, account, response, e.__str__())
+                auth:%s, account:%s, account_index:%s, response:%s, err:%s',
+                auth, account, account_index, response, e.__str__())
             raise Exception('db_insert_error')
 
 
@@ -285,7 +288,7 @@ class AuthRepository(IAuthRepository):
 
     async def update_password(
         self, db: Any, update_password_params: UpdatePasswordDTO
-    ) -> (bool):
+    ) -> (FTAuth):
         res = None
         try:
             db = await db.access()
@@ -298,10 +301,11 @@ class AuthRepository(IAuthRepository):
                     ':ps': update_password_params.pass_salt,
                     ':ph': update_password_params.pass_hash,
                 },
-                ReturnValues='UPDATED_NEW',
+                ReturnValues='ALL_NEW',
             )
             if 'Attributes' in res:
-                return True
+                # NOTE: return "role_id" for table: account_indexs
+                return FTAuth.parse_obj(res['Attributes'])
             else:
                 raise Exception('update_password_fail')
     

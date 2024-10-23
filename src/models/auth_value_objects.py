@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Any, Type
+from typing import Any, Type, Optional
 from .event_vos import PubEventDetailVO
 from ..configs.constants import *
 from ..infra.db.nosql.auth_schemas import FTAuth, Account
@@ -31,6 +31,7 @@ class SignupVO(BaseModel):
         return PubEventDetailVO(
             event_id=gen_snowflake_id(),
             event_type=BusinessEventType.USER_REGISTRATION.value,
+            role_id=self.auth.role_id,
             metadata={
                 'auth': self.auth.dict(),
                 'account': self.account.dict(),
@@ -50,11 +51,17 @@ class UpdatePasswordDTO(BaseModel):
     email: EmailStr
     pass_hash: str
     pass_salt: str
+    role_id: Optional[int] = None
+
+    def set_role_id(self, role_id: int):
+        self.role_id = role_id
+        return self
 
     def pub_event(self) -> (PubEventDetailVO):
         return PubEventDetailVO(
             event_id=gen_snowflake_id(),
             event_type=BusinessEventType.UPDATE_PASSWORD.value,
+            role_id=self.role_id,   # NOTE: 沒給就不能 publish
             metadata=self.dict(),
             status=PubEventStatus.READY,
         )
