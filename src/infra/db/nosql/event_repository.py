@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Attr
 
 from .ddb_error_handler import *
 from ....models.event_vos import *
-from ....configs.conf import TABLE_EVENT, TABLE_EVENT_LOG
+from ....configs.conf import TABLE_EVENT, TABLE_EVENT_LOG, TABLE_ACCOUNT_INDEX
 from ....configs.exceptions import *
 from ....repositories.event_repository import IEventRepository
 from ...resources.handlers.db_resource import DynamoDBResourceHandler
@@ -61,6 +61,24 @@ class EventRepository(IEventRepository):
                             'Item': event_log_entity.dict(),
                         }
                     },
+                    {
+                        'Update': {
+                            'TableName': TABLE_ACCOUNT_INDEX,
+                            'Key': {
+                                'role_id': event.role_id, # partition key
+                            },
+                            'UpdateExpression': 'SET #event_id = :event_id, #updated_at = :updated_at ',
+                            'ExpressionAttributeNames': {
+                                '#event_id': 'event_id',
+                                '#updated_at': 'updated_at', 
+                            },
+                            'ExpressionAttributeValues': {
+                                ':event_id': event_entity.event_id,
+                                ':updated_at': event_entity.updated_at,
+                            },
+                            'ReturnValuesOnConditionCheckFailure': 'ALL_OLD'  # 如果条件检查失败时返回旧的值
+                        },
+                    },
                 ]
             )
             log.info('upsert_publish_event_log. Transaction successful: %s', json.dumps(response))
@@ -111,6 +129,24 @@ class EventRepository(IEventRepository):
                             'TableName': TABLE_EVENT_LOG,
                             'Item': event_log_entity.dict(),
                         }
+                    },
+                    {
+                        'Update': {
+                            'TableName': TABLE_ACCOUNT_INDEX,
+                            'Key': {
+                                'role_id': event.role_id, # partition key
+                            },
+                            'UpdateExpression': 'SET #event_id = :event_id, #updated_at = :updated_at ',
+                            'ExpressionAttributeNames': {
+                                '#event_id': 'event_id',
+                                '#updated_at': 'updated_at', 
+                            },
+                            'ExpressionAttributeValues': {
+                                ':event_id': event_entity.event_id,
+                                ':updated_at': event_entity.updated_at,
+                            },
+                            'ReturnValuesOnConditionCheckFailure': 'ALL_OLD'  # 如果条件检查失败时返回旧的值
+                        },
                     },
                 ]
             )

@@ -25,6 +25,7 @@ async def subscribe_user_registration(event: SubEventDetailVO):
             account_db,
         )
         event.completed()
+        # TODO: 123 啥時給 role_id?
         await event_repo.append_sub_event_log(event)
         log.info('subscribe_user_registration and create signup data success %s, status: %s',
                  signup_vo.dict(), event.status.value)

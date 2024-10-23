@@ -97,6 +97,7 @@ class AuthService:
 
             # 3. 將帳戶資料寫入 DB
             signup_vo = await self.save_account_data(auth, account, auth_db, account_db)
+            # TODO: 123 啥時給 role_id?
             return signup_vo
 
         except ClientException as e:
@@ -190,8 +191,9 @@ class AuthService:
                 ):
                     raise ForbiddenException(msg='Invalid Password')
 
-            await self.auth_repo.update_password(db=db, update_password_params=params)
-            return params
+            auth: FTAuth = await self.auth_repo.update_password(db=db, update_password_params=params)
+            # TODO: 123 啥時給 role_id?
+            return params.set_role_id(role_id=auth.role_id)
 
         except NotFoundException as e:
             raise NotFoundException(msg=e.msg)
@@ -202,7 +204,11 @@ class AuthService:
         except Exception as e:
             log.error(f'{self.__cls_name}.update_password [unknown_err] \
                 params:%s, err:%s', params, e.__str__())
-            raise ServerException(msg='unknown_err')
+
+        # raise exception avoid send remote event
+        raise_http_exception(e, msg='unknown_err')
+
+
 
     async def send_reset_password_confirm_email(self, auth_db: Any, account_db: Any, email: EmailStr) -> (str):
         user = await self.auth_repo.get_account_by_email(auth_db=auth_db, account_db=account_db, email=email, fields=['aid'])

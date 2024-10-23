@@ -6,15 +6,19 @@ from ..infra.utils.auth_util import gen_snowflake_id
 
 
 class EventDetailVO(BaseModel):
+    # TODO: 123 啥時給 role_id?
     event_id: int
     event_type: str
+    role_id: int
     metadata: Dict[Any, Any]
     retry: int = 0
 
     def payload(self) -> 'EventDetailVO':
         return EventDetailVO.parse_obj({
+            # TODO: 123 啥時給 role_id?
             'event_id': self.event_id,
             'event_type': self.event_type,
+            'role_id': self.role_id,
             'metadata': self.metadata,
             'retry': self.retry,
         })
@@ -26,7 +30,7 @@ class PubEventDetailVO(EventDetailVO):
     def ready(self) -> 'PubEventDetailVO':
         self.status = PubEventStatus.READY
         return self
-    
+
     def published(self) -> 'PubEventDetailVO':
         self.status = PubEventStatus.PUBLISHED
         return self
@@ -35,7 +39,7 @@ class PubEventDetailVO(EventDetailVO):
         self.status = PubEventStatus.PUB_FAILED
         self.retry += 1
         return self
-    
+
     def dict(self):
         original_dict = super().dict()
         original_dict['status'] = original_dict['status'].value  # 轉換 Enum 為其值
@@ -49,7 +53,7 @@ class SubEventDetailVO(EventDetailVO):
     def subscribed(self) -> 'SubEventDetailVO':
         self.status = SubEventStatus.SUBSCRIBED
         return self
-    
+
     def completed(self) -> 'SubEventDetailVO':
         self.status = SubEventStatus.COMPLETED
         return self
@@ -58,11 +62,11 @@ class SubEventDetailVO(EventDetailVO):
         self.status = SubEventStatus.SUB_FAILED
         self.retry += 1
         return self
-    
+
     async def call_ack(self):
         if self.ack:
             await self.ack()
-    
+
     def dict(self):
         original_dict = super().dict()
         original_dict['status'] = original_dict['status'].value  # 轉換 Enum 為其值

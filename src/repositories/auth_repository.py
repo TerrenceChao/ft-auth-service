@@ -38,5 +38,5 @@ class IAuthRepository(ABC):
         pass
 
     @abstractmethod
-    async def update_password(self, db: Any, update_password_params: UpdatePasswordDTO):
+    async def update_password(self, db: Any, update_password_params: UpdatePasswordDTO) -> (FTAuth):
         pass
