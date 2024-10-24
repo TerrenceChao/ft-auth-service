@@ -98,7 +98,6 @@ class AuthRepository(IAuthRepository):
         account_index: AccountIndex = AccountIndex(
             role_id=auth.role_id,
             aid=auth.aid,
-            event_id=0,
         )
         account_index_dict: Dict = account_index.create_ts().dict()
 
