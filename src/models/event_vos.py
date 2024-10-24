@@ -6,17 +6,17 @@ from ..infra.utils.auth_util import gen_snowflake_id
 
 
 class EventDetailVO(BaseModel):
+    role_id: int
     event_id: int
     event_type: str
-    role_id: int
     metadata: Dict[Any, Any]
     retry: int = 0
 
     def payload(self) -> 'EventDetailVO':
         return EventDetailVO.parse_obj({
+            'role_id': self.role_id,
             'event_id': self.event_id,
             'event_type': self.event_type,
-            'role_id': self.role_id,
             'metadata': self.metadata,
             'retry': self.retry,
         })

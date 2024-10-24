@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Attr
 
 from .ddb_error_handler import *
 from ....models.event_vos import *
-from ....configs.conf import TABLE_EVENT, TABLE_EVENT_LOG, TABLE_ACCOUNT_INDEX
+from ....configs.conf import TABLE_EVENT, TABLE_EVENT_LOG
 from ....configs.exceptions import *
 from ....repositories.event_repository import IEventRepository
 from ...resources.handlers.db_resource import DynamoDBResourceHandler
@@ -38,7 +38,7 @@ class EventRepository(IEventRepository):
             client = db.meta.client
 
             (last_created, last_updated) = \
-                await self.get_last_event_times(client, event_entity.event_id)
+                await self.get_last_event_times(client, event_entity)
             if event_entity.updated_at <= last_updated:
                 log.info('upsert_publish_event_log. updated_at is not newer than the existing one.\
                             last_updated: %s, new: %s', last_updated, event_entity.updated_at)
@@ -60,24 +60,6 @@ class EventRepository(IEventRepository):
                             'TableName': TABLE_EVENT_LOG,
                             'Item': event_log_entity.dict(),
                         }
-                    },
-                    {
-                        'Update': {
-                            'TableName': TABLE_ACCOUNT_INDEX,
-                            'Key': {
-                                'role_id': event.role_id, # partition key
-                            },
-                            'UpdateExpression': 'SET #event_id = :event_id, #updated_at = :updated_at ',
-                            'ExpressionAttributeNames': {
-                                '#event_id': 'event_id',
-                                '#updated_at': 'updated_at', 
-                            },
-                            'ExpressionAttributeValues': {
-                                ':event_id': event_entity.event_id,
-                                ':updated_at': event_entity.updated_at,
-                            },
-                            'ReturnValuesOnConditionCheckFailure': 'ALL_OLD'  # 如果条件检查失败时返回旧的值
-                        },
                     },
                 ]
             )
@@ -107,7 +89,7 @@ class EventRepository(IEventRepository):
             client = db.meta.client
 
             (last_created, last_updated) = \
-                await self.get_last_event_times(client, event_entity.event_id)
+                await self.get_last_event_times(client, event_entity)
             if event_entity.updated_at <= last_updated:
                 log.info('upsert_subscribe_event_log. updated_at is not newer than the existing one.\
                             last_updated: %s, new: %s', last_updated, event_entity.updated_at)
@@ -130,24 +112,6 @@ class EventRepository(IEventRepository):
                             'Item': event_log_entity.dict(),
                         }
                     },
-                    {
-                        'Update': {
-                            'TableName': TABLE_ACCOUNT_INDEX,
-                            'Key': {
-                                'role_id': event.role_id, # partition key
-                            },
-                            'UpdateExpression': 'SET #event_id = :event_id, #updated_at = :updated_at ',
-                            'ExpressionAttributeNames': {
-                                '#event_id': 'event_id',
-                                '#updated_at': 'updated_at', 
-                            },
-                            'ExpressionAttributeValues': {
-                                ':event_id': event_entity.event_id,
-                                ':updated_at': event_entity.updated_at,
-                            },
-                            'ReturnValuesOnConditionCheckFailure': 'ALL_OLD'  # 如果条件检查失败时返回旧的值
-                        },
-                    },
                 ]
             )
             log.info('upsert_subscribe_event_log. Transaction successful: %s', json.dumps(response))
@@ -161,10 +125,13 @@ class EventRepository(IEventRepository):
             raise Exception(f'db_create_error: {str(e)}')
 
 
-    async def get_last_event_times(self, client: Any, event_id: int) -> Tuple[int, int]:
+    async def get_last_event_times(self, client: Any, event_entity: EventEntity) -> Tuple[int, int]:
         response = await client.get_item(
             TableName=TABLE_EVENT,
-            Key={'event_id': event_id},
+            Key={
+                'role_id': event_entity.role_id,
+                'event_id': event_entity.event_id,
+            },
             ProjectionExpression='created_at, updated_at',
         )
         if 'Item' in response:

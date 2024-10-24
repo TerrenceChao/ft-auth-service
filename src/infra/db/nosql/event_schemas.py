@@ -7,7 +7,8 @@ from ...utils.time_util import gen_timestamp
 
 
 class EventEntity(BaseEntity):
-    event_id: int   # partition key
+    role_id: int   # partition key
+    event_id: int  # sort key
     event_type: str
     metadata: Dict[Any, Any]
     status: str

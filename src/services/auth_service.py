@@ -288,8 +288,9 @@ class AuthService:
 
             # 2. 錯誤處理..
             try:
-                await self.auth_repo.delete_account(
-                    auth_db=auth_db, account_db=account_db, auth=auth)
+                # create_account is transactional, so we don't need to delete account
+                # await self.auth_repo.delete_account(
+                #     auth_db=auth_db, account_db=account_db, auth=auth)
                 await self.obj_storage.delete(bucket=auth.email)
 
             except Exception as e:

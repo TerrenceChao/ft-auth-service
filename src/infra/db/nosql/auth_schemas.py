@@ -31,7 +31,6 @@ class Account(BaseEntity):
 class AccountIndex(BaseEntity):
     role_id: int # partition key
     aid: int
-    event_id: int = 0 # no event in the beginning
 
 
 # request
