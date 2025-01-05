@@ -43,8 +43,6 @@ class SqsMqAdapter:
                       self.sqs_label, str(e))
             raise e
 
-    async def trigger_subscribe_messages(self):
-        await self.subscribe_messages(self.callee)
 
     async def is_listening(self):
         async with self.lock:
@@ -53,13 +51,6 @@ class SqsMqAdapter:
     async def stop_listening(self):
         async with self.lock:
             self.loop = False
-
-    async def access_sqs_client(self):
-        # promise `sqs_client` only initialized once by sqs_rsc.lock
-        sqs_client = await self.sqs_rsc.access(
-            trigger_subscription=self.trigger_subscribe_messages
-        )
-        return sqs_client
 
     async def subscribe_messages(self, callee: Callable, **kwargs):
         # only one is allowed to access sqs_client & enter listening loop
@@ -70,12 +61,15 @@ class SqsMqAdapter:
             self.loop = True
 
         self.callee = callee
-        sqs_client = await self.access_sqs_client()
+        
 
         # apply asyncio.lock to protect the loop
         while await self.is_listening():
-            await self.__receive_batch_messages(sqs_client, callee, **kwargs)
-            await asyncio.sleep(1)  # Avoid busy waiting
+            sqs_resource = await self.sqs_rsc.access()
+            async with sqs_resource as sqs_client:
+                await self.__receive_batch_messages(sqs_client, callee, **kwargs)
+                await asyncio.sleep(1)  # Avoid busy waiting
+            continue
 
 
     async def __receive_batch_messages(self, sqs_client: aioboto3.Session.client, callee: Callable, **kwargs):

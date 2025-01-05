@@ -30,8 +30,6 @@ class SQSResourceHandler(ResourceHandler):
         self.session = session
         self.label = label
         self.queue_url = queue_url
-        self.sqs_client = None
-        self.trigger_subscribe_messages = None
 
     def timeout(self) -> bool:
         return False
@@ -40,8 +38,7 @@ class SQSResourceHandler(ResourceHandler):
         pass
 
     async def accessing(self, **kwargs):
-        async with self.session.client("sqs", config=mq_config) as sqs_client:
-            return sqs_client
+        return self.session.client("sqs", config=mq_config)
 
     # Regular activation to maintain connections and connection pools
     async def probe(self):
